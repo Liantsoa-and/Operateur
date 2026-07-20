@@ -38,7 +38,9 @@ Objectif : un opérateur consulte le total des frais collectés
 ## 4 - Situation des comptes clients
 
 ## 5 - Login client automatique (si le numero n'existe pas, il est cree automatiquement) (B1)
-Objectif : Le client peut conulter son solde sur son compte 
+
+## 6 - Voir Solde pour le client
+Objectif : Le client peut consulter son solde sur son compte 
 - [ok] base (B1)
     - appeler la view v_solde
 - [ok] fonction (B1)
@@ -50,9 +52,8 @@ Objectif : Le client peut conulter son solde sur son compte
 - [ok] design (B1)
     - Utiliser la variable solde envoyer depuis le Controller
 
-## 6 - Voir Solde pour le client
-
 ## 7 - Faire un depot pour le client
+- Objectif depuis le 
 
 ## 8 - Faire un retrait pour le client
 
