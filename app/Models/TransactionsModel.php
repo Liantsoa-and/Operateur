@@ -159,36 +159,92 @@ class TransactionsModel extends Model
         ];
     }
 
-    public function getHistoriqueClient(int $idClient): array{
-        return $this->db->query("
-            SELECT
-                t.id,
-                t.numero_transaction,
-                t.date_transaction,
-                to_.type AS type_operation,
-                t.montant,
-                t.frais,
-                CASE
-                    WHEN to_.type = 'depot'     THEN t.montant
-                    WHEN to_.type IN ('retrait', 'transfert') AND t.id_client = :id: THEN -(t.montant + t.frais)
-                    WHEN to_.type = 'transfert' AND t.id_destinataire = :id: THEN t.montant
-                    ELSE 0
-                END AS impact_solde,
-                CASE
-                    WHEN to_.type = 'transfert' AND t.id_client = :id:          THEN dest.numero
-                    WHEN to_.type = 'transfert' AND t.id_destinataire = :id:    THEN src.numero
-                    ELSE NULL
-                END AS numero_correspondant
-            FROM transactions t
-            JOIN bareme b ON t.id_bareme = b.id
-            JOIN type_operation to_ ON b.id_type_operation = to_.id
-            LEFT JOIN client dest ON dest.id = t.id_destinataire
-            LEFT JOIN client src  ON src.id  = t.id_client
-            WHERE t.id_client = :id:
-               OR t.id_destinataire = :id:
-            ORDER BY t.date_transaction DESC
-        ", ['id' => $idClient])->getResultArray();
+public function getHistoriqueClient(int $idClient, array $filters = []): array
+{
+    $sql = "
+        SELECT
+            t.id,
+            t.numero_transaction,
+            t.date_transaction,
+            to_.type AS type_operation,
+            t.montant,
+            t.frais,
+            CASE
+                WHEN to_.type = 'depot'     THEN t.montant
+                WHEN to_.type IN ('retrait', 'transfert') AND t.id_client = :id: THEN -(t.montant + t.frais)
+                WHEN to_.type = 'transfert' AND t.id_destinataire = :id: THEN t.montant
+                ELSE 0
+            END AS impact_solde,
+            CASE
+                WHEN to_.type = 'transfert' AND t.id_client = :id:          THEN dest.numero
+                WHEN to_.type = 'transfert' AND t.id_destinataire = :id:    THEN src.numero
+                ELSE NULL
+            END AS numero_correspondant
+        FROM transactions t
+        JOIN bareme b ON t.id_bareme = b.id
+        JOIN type_operation to_ ON b.id_type_operation = to_.id
+        LEFT JOIN client dest ON dest.id = t.id_destinataire
+        LEFT JOIN client src  ON src.id  = t.id_client
+        WHERE (t.id_client = :id: OR t.id_destinataire = :id:)
+    ";
+
+    $params = ['id' => $idClient];
+
+    // --- Filtre Date (min / max) ---
+    if (!empty($filters['date_min'])) {
+        $sql .= " AND t.date_transaction >= :date_min: ";
+        $params['date_min'] = $filters['date_min'] . ' 00:00:00';
     }
+
+    if (!empty($filters['date_max'])) {
+        $sql .= " AND t.date_transaction <= :date_max: ";
+        $params['date_max'] = $filters['date_max'] . ' 23:59:59';
+    }
+
+    // --- Filtre Numéro de transaction (texte, un seul champ) ---
+    if (!empty($filters['numero_transaction'])) {
+        $sql .= " AND t.numero_transaction LIKE :numero_transaction: ";
+        $params['numero_transaction'] = '%' . $filters['numero_transaction'] . '%';
+    }
+
+    // --- Filtre Type d'opération (texte, un seul champ) ---
+    if (!empty($filters['type_operation'])) {
+        $sql .= " AND to_.type = :type_operation: ";
+        $params['type_operation'] = $filters['type_operation'];
+    }
+
+    // --- Filtre Montant (min / max) ---
+    if (!empty($filters['montant_min']) || $filters['montant_min'] === '0') {
+        $sql .= " AND t.montant >= :montant_min: ";
+        $params['montant_min'] = (float) $filters['montant_min'];
+    }
+
+    if (!empty($filters['montant_max'])) {
+        $sql .= " AND t.montant <= :montant_max: ";
+        $params['montant_max'] = (float) $filters['montant_max'];
+    }
+
+    // --- Filtre Frais (min / max) ---
+    if (!empty($filters['frais_min']) || $filters['frais_min'] === '0') {
+        $sql .= " AND t.frais >= :frais_min: ";
+        $params['frais_min'] = (float) $filters['frais_min'];
+    }
+
+    if (!empty($filters['frais_max'])) {
+        $sql .= " AND t.frais <= :frais_max: ";
+        $params['frais_max'] = (float) $filters['frais_max'];
+    }
+
+    // --- Filtre Correspondant (texte, un seul champ ; source ou destinataire) ---
+    if (!empty($filters['correspondant'])) {
+        $sql .= " AND (dest.numero LIKE :correspondant: OR src.numero LIKE :correspondant:) ";
+        $params['correspondant'] = '%' . $filters['correspondant'] . '%';
+    }
+
+    $sql .= " ORDER BY t.date_transaction DESC ";
+
+    return $this->db->query($sql, $params)->getResultArray();
+}
 
     public function getHistoriqueOperateur(int $idOperateur){
         return $this->db->query("
