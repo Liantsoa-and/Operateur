@@ -18,11 +18,19 @@ class GainController extends BaseController
 
     public function index(): string
     {
-        if (session()->get('operateur_id')) {
-            return redirect()->to('/operateur/gains');
+        if (!session()->get('operateur_id')) {
+            return redirect()->to('/operateur/login');
         }
 
-        return view('auth/login');
+        $idOperateur = session()->get('operateur_id');
+        $transactionModel = new TransactionsModel();
+
+        $data = [
+            'gains'      => $transactionModel->getGains($idOperateur),
+            'historique' => $transactionModel->getHistoriqueOperateur($idOperateur),
+        ];
+
+        return view('operateur/gains', $data);
     }
 
 }
