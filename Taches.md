@@ -75,7 +75,7 @@ Objectif : Le client peut consulter son solde sur son compte
     - routes `client/depot , clientController::depot`
     - ClientController.depot()
 - [] design
-    - Appeler cette fonciton depuis un Ajax
+    - Appeler cette fonction depuis un Ajax
 ## 8 - Faire un retrait pour le client
 
 ## 9 - Faire un transfert pour le client

@@ -279,6 +279,58 @@ in APPPATH\Controllers\ClientController.php on line 9.
 10 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
 11 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter()
 12 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb()
+CRITICAL - 2026-07-20 08:55:25 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "client/retrait.php"
+[Method: GET, Route: client/retrait]
+in SYSTEMPATH\Exceptions\FrameworkException.php on line 39.
+ 1 SYSTEMPATH\View\View.php(228): CodeIgniter\Exceptions\FrameworkException::forInvalidFile()
+ 2 SYSTEMPATH\Common.php(1250): CodeIgniter\View\View->render()
+ 3 APPPATH\Controllers\ClientController.php(110): view()
+ 4 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\ClientController->retrait()
+ 5 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController()
+ 6 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest()
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter()
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb()
+10 SYSTEMPATH\rewrite.php(44): require_once('D:\\ITU\\S4\\Systeme d information\\Operateur\\public\\index.php')
+CRITICAL - 2026-07-20 08:55:37 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "client/depot.php"
+[Method: POST, Route: client/depot]
+in SYSTEMPATH\Exceptions\FrameworkException.php on line 39.
+ 1 SYSTEMPATH\View\View.php(228): CodeIgniter\Exceptions\FrameworkException::forInvalidFile()
+ 2 SYSTEMPATH\Common.php(1250): CodeIgniter\View\View->render()
+ 3 APPPATH\Controllers\ClientController.php(76): view()
+ 4 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\ClientController->depot()
+ 5 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController()
+ 6 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest()
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter()
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb()
+10 SYSTEMPATH\rewrite.php(44): require_once('D:\\ITU\\S4\\Systeme d information\\Operateur\\public\\index.php')
+CRITICAL - 2026-07-20 08:57:12 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "client/depot.php"
+[Method: POST, Route: client/depot]
+in SYSTEMPATH\Exceptions\FrameworkException.php on line 39.
+ 1 SYSTEMPATH\View\View.php(228): CodeIgniter\Exceptions\FrameworkException::forInvalidFile()
+ 2 SYSTEMPATH\Common.php(1250): CodeIgniter\View\View->render()
+ 3 APPPATH\Controllers\ClientController.php(76): view()
+ 4 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\ClientController->depot()
+ 5 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController()
+ 6 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest()
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter()
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb()
+10 SYSTEMPATH\rewrite.php(44): require_once('D:\\ITU\\S4\\Systeme d information\\Operateur\\public\\index.php')
+CRITICAL - 2026-07-20 09:10:53 --> CodeIgniter\View\Exceptions\ViewException: Invalid file: "client/retrait.php"
+[Method: GET, Route: client/retrait]
+in SYSTEMPATH\Exceptions\FrameworkException.php on line 39.
+ 1 SYSTEMPATH\View\View.php(228): CodeIgniter\Exceptions\FrameworkException::forInvalidFile()
+ 2 SYSTEMPATH\Common.php(1250): CodeIgniter\View\View->render()
+ 3 APPPATH\Controllers\ClientController.php(110): view()
+ 4 SYSTEMPATH\CodeIgniter.php(951): App\Controllers\ClientController->retrait()
+ 5 SYSTEMPATH\CodeIgniter.php(497): CodeIgniter\CodeIgniter->runController()
+ 6 SYSTEMPATH\CodeIgniter.php(340): CodeIgniter\CodeIgniter->handleRequest()
+ 7 SYSTEMPATH\Boot.php(417): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter()
+ 9 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb()
+10 SYSTEMPATH\rewrite.php(44): require_once('D:\\ITU\\S4\\Systeme d information\\Operateur\\public\\index.php')
 ERROR - 2026-07-20 08:34:30 --> UNIQUE constraint failed: client.numero
 in SYSTEMPATH/Database/SQLite3/Connection.php on line 163.
  1 SYSTEMPATH/Database/SQLite3/Connection.php(163): SQLite3->exec('INSERT INTO `client` (`numero`)

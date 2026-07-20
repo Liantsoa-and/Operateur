@@ -60,7 +60,7 @@ class ClientController extends BaseController
     {
         if ($redir = $this->requireAuth()) return $redir;
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $montant = (float) $this->request->getPost('montant');
 
             $result = $this->transactionsModel->faireDepot($this->getClientId(), $montant);
@@ -73,7 +73,7 @@ class ClientController extends BaseController
                 ->with('success', "Dépôt de {$montant} Ar effectué avec succès.");
         }
 
-        return view('client/depot', [
+        return view('client/solde', [
             'numero' => session()->get('client_numero'),
             'solde'  => $this->clientModel->getSolde($this->getClientId()),
         ]);

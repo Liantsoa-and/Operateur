@@ -23,4 +23,11 @@ $routes->get('operateur/comptes',                  'OperateurController::situati
 $routes->get('operateur/gains',                    'OperateurController::situationGains');
 $routes->post('operateur/gains/filtrer',           'OperateurController::filtrerGains');
 
-$routes->get('/client/solde', 'ClientController::solde');
+// Client
+$routes->get('/client/solde',        'ClientController::solde');
+$routes->get('/client/depot',        'ClientController::depot');
+$routes->post('/client/depot',       'ClientController::depot');
+$routes->get('/client/retrait',      'ClientController::retrait');
+$routes->post('/client/retrait',     'ClientController::retrait');
+$routes->get('/client/transfert',    'ClientController::transfert');
+$routes->post('/client/transfert',   'ClientController::transfert');
