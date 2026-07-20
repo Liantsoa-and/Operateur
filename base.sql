@@ -35,7 +35,6 @@ CREATE TABLE transaction(
     numero_transaction VARCHAR(50) NOT NULL UNIQUE,
     montant DECIMAL(10,2) NOT NULL,
     frais DECIMAL(10,2) NOT NULL DEFAULT 0,
-    montant_total DECIMAL(10,2) NOT NULL,
     date_transaction DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     id_client INTEGER NOT NULL,
     id_destinataire INTEGER,
@@ -54,8 +53,8 @@ SELECT
     COALESCE(SUM(
         CASE 
             WHEN to_.type = 'depot' THEN t.montant
-            WHEN to_.type = 'retrait' THEN -t.montant_total
-            WHEN to_.type = 'transfert' AND c.id = t.id_client THEN -t.montant_total   -- expéditeur
+            WHEN to_.type = 'retrait' THEN -(t.montant + t.frais)
+            WHEN to_.type = 'transfert' AND c.id = t.id_client THEN -(t.montant + t.frais)   -- expéditeur
             WHEN to_.type = 'transfert' AND c.id = t.id_destinataire THEN t.montant -- destinataire
             ELSE 0
         END
