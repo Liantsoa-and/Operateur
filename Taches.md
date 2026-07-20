@@ -31,9 +31,9 @@ Objectif : un opérateur consulte le total des frais collectés
     - [ok] créer GainsController avec méthode index()
     - [ok] récupérer l'opérateur connecté depuis la session
     - [ok] passer gains + historique à la vue
-- [ ] design
-    - [ ] carte récapitulative : total retrait / total transfert / total général
-    - [ ] tableau historique : date, type, client, montant, frais
+- [ok] design
+    - [ok] carte récapitulative : total retrait / total transfert / total général
+    - [ok] tableau historique : date, type, client, montant, frais
 
 ## 4 - Situation des comptes clients
 
