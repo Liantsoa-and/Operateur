@@ -6,8 +6,9 @@ use CodeIgniter\Model;
 
 class BaremeModel extends Model
 {
-    protected $table = 'bareme';
+    protected $table      = 'bareme';
     protected $primaryKey = 'id';
+    protected $returnType = 'array';
 
     protected $allowedFields = [
         'description',
@@ -17,5 +18,53 @@ class BaremeModel extends Model
         'id_type_operation',
     ];
 
-    protected $returnType = 'array';
+    protected $validationRules = [
+        'min'               => 'required|decimal|greater_than[0]',
+        'max'               => 'required|decimal',
+        'frais'             => 'required|decimal|greater_than_equal_to[0]',
+        'id_type_operation' => 'required|is_natural_no_zero',
+    ];
+
+    // Retourne le barème applicable pour un montant et un type d'opération
+    // Règle : une seule tranche applicable, les tranches ne se chevauchent pas
+    public function getTranche(int $idTypeOperation, float $montant): array|null
+    {
+        return $this->where('id_type_operation', $idTypeOperation)
+                    ->where('min <=', $montant)
+                    ->where('max >=', $montant)
+                    ->first();
+    }
+
+    // Calcule les frais pour un montant et un type d'opération
+    // Retourne null si aucune tranche trouvée (montant hors barème)
+    public function calculerFrais(int $idTypeOperation, float $montant): float|null
+    {
+        $tranche = $this->getTranche($idTypeOperation, $montant);
+        if (!$tranche) return null;
+
+        return (float) $tranche['frais'];
+    }
+
+    // Vérifie qu'une nouvelle tranche ne chevauche pas les tranches existantes
+    // Retourne true si pas de chevauchement (insertion autorisée)
+    public function estSansChevauchemnt(int $idTypeOperation, float $min, float $max, int|null $excludeId = null): bool
+    {
+        $builder = $this->where('id_type_operation', $idTypeOperation)
+                        ->where('min <', $max)
+                        ->where('max >', $min);
+
+        if ($excludeId !== null) {
+            $builder = $builder->where('id !=', $excludeId);
+        }
+
+        return $builder->countAllResults() === 0;
+    }
+
+    // Tous les barèmes d'un type d'opération, triés par min
+    public function getByTypeOperation(int $idTypeOperation): array
+    {
+        return $this->where('id_type_operation', $idTypeOperation)
+                    ->orderBy('min', 'ASC')
+                    ->findAll();
+    }
 }
