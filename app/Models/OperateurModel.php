@@ -43,10 +43,10 @@ class OperateurModel extends Model
         ")->getResultArray();
     }
 
-    // Historique détaillé des transactions (retrait + transfert)
-    public function getHistoriqueGains(): array
+    // Historique détaillé des transactions (retrait + transfert) avec filtres optionnels
+    public function getHistoriqueGainsFiltree(array $filtres = []): array
     {
-        return $this->db->query("
+        $sql = "
             SELECT
                 t.numero_transaction,
                 t.date_transaction,
@@ -59,8 +59,42 @@ class OperateurModel extends Model
             JOIN type_operation to_ ON b.id_type_operation = to_.id
             JOIN client c ON c.id = t.id_client
             WHERE to_.type IN ('retrait', 'transfert')
-            ORDER BY t.date_transaction DESC
-        ")->getResultArray();
+        ";
+        $params = [];
+
+        if (!empty($filtres['type']) && in_array($filtres['type'], ['retrait', 'transfert'])) {
+            $sql .= " AND to_.type = :type:";
+            $params['type'] = $filtres['type'];
+        }
+
+        if (!empty($filtres['date_debut'])) {
+            $sql .= " AND t.date_transaction >= :date_debut:";
+            $params['date_debut'] = $filtres['date_debut'] . ' 00:00:00';
+        }
+
+        if (!empty($filtres['date_fin'])) {
+            $sql .= " AND t.date_transaction <= :date_fin:";
+            $params['date_fin'] = $filtres['date_fin'] . ' 23:59:59';
+        }
+
+        if (!empty($filtres['client'])) {
+            $sql .= " AND c.numero LIKE :client:";
+            $params['client'] = '%' . $filtres['client'] . '%';
+        }
+
+        if (isset($filtres['montant_min']) && $filtres['montant_min'] !== '') {
+            $sql .= " AND t.montant >= :montant_min:";
+            $params['montant_min'] = (float) $filtres['montant_min'];
+        }
+
+        if (isset($filtres['montant_max']) && $filtres['montant_max'] !== '') {
+            $sql .= " AND t.montant <= :montant_max:";
+            $params['montant_max'] = (float) $filtres['montant_max'];
+        }
+
+        $sql .= " ORDER BY t.date_transaction DESC";
+
+        return $this->db->query($sql, $params)->getResultArray();
     }
 
     // Total global des gains

@@ -34,8 +34,11 @@ Objectif : un opérateur consulte le total des frais collectés
 - [ok] design
     - [ok] carte récapitulative : total retrait / total transfert / total général
     - [ok] tableau historique : date, type, client, montant, frais
+    - [ok] filtre multi-criteres
 
 ## 4 - Situation des comptes clients
+- [ok] ajouter un tableau de liste des clients
+- [ok] ajouter des kpi de resumer en haut de page
 
 ## 5 - Login client automatique (si le numero n'existe pas, il est cree automatiquement) (B1)
 - [ok] vérification du préfixe

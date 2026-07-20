@@ -26,10 +26,7 @@ class OperateurController extends BaseController
         $this->clientModel    = new ClientModel();
     }
 
-    // ----------------------------------------------------------------
-    // Dashboard opérateur
-    // GET /operateur
-    // ----------------------------------------------------------------
+
     public function index(): string
     {
         return view('operateur/dashboard', [
@@ -38,12 +35,6 @@ class OperateurController extends BaseController
         ]);
     }
 
-    // ================================================================
-    // PREFIXES
-    // ================================================================
-
-    // GET /operateur/prefixes
-    // Liste tous les préfixes avec leur opérateur
     public function prefixes(): string
     {
         $prefixes = $this->prefixeModel
@@ -57,8 +48,7 @@ class OperateurController extends BaseController
         ]);
     }
 
-    // POST /operateur/prefixes/ajouter
-    // Règle : préfixe = 3 chiffres, unique, lié à un opérateur
+
     public function ajouterPrefixe(): \CodeIgniter\HTTP\RedirectResponse
     {
         $debut      = trim($this->request->getPost('debut_numero'));
@@ -68,7 +58,6 @@ class OperateurController extends BaseController
             return redirect()->back()->with('error', 'Un préfixe doit contenir exactement 3 chiffres.');
         }
 
-        // Vérifier unicité
         if ($this->prefixeModel->where('debut_numero', $debut)->first()) {
             return redirect()->back()->with('error', "Le préfixe {$debut} existe déjà.");
         }
@@ -80,19 +69,12 @@ class OperateurController extends BaseController
         return redirect()->to('/operateur/prefixes')->with('success', "Préfixe {$debut} ajouté.");
     }
 
-    // POST /operateur/prefixes/supprimer/:id
     public function supprimerPrefixe(int $id): \CodeIgniter\HTTP\RedirectResponse
     {
         $this->prefixeModel->delete($id);
         return redirect()->to('/operateur/prefixes')->with('success', 'Préfixe supprimé.');
     }
 
-    // ================================================================
-    // TYPES D'OPÉRATIONS
-    // ================================================================
-
-    // GET /operateur/types
-    // Liste les 3 types avec leurs barèmes
     public function typesOperations(): string
     {
         return view('operateur/types/index', [
@@ -100,12 +82,7 @@ class OperateurController extends BaseController
         ]);
     }
 
-    // ================================================================
-    // BAREMES DE FRAIS
-    // ================================================================
 
-    // GET /operateur/baremes/:id_type
-    // Affiche les tranches d'un type d'opération
     public function baremes(int $idType): string
     {
         $type = $this->typeOpModel->find($idType);
@@ -119,8 +96,7 @@ class OperateurController extends BaseController
         ]);
     }
 
-    // POST /operateur/baremes/ajouter
-    // Règle : montant > 0, tranches sans chevauchement
+
     public function ajouterBareme(): \CodeIgniter\HTTP\RedirectResponse
     {
         $idType      = (int) $this->request->getPost('id_type_operation');
@@ -137,7 +113,6 @@ class OperateurController extends BaseController
             return redirect()->back()->with('error', 'Les frais ne peuvent pas être négatifs.');
         }
 
-        // Règle : les tranches ne doivent pas se chevaucher
         if (!$this->baremeModel->estSansChevauchemnt($idType, $min, $max)) {
             return redirect()->back()->with('error', 'Cette tranche chevauche une tranche existante.');
         }
@@ -153,8 +128,6 @@ class OperateurController extends BaseController
         return redirect()->to("/operateur/baremes/{$idType}")->with('success', 'Tranche ajoutée.');
     }
 
-    // POST /operateur/baremes/modifier/:id
-    // Modification d'une tranche existante (barèmes modifiables)
     public function modifierBareme(int $id): \CodeIgniter\HTTP\RedirectResponse
     {
         $bareme = $this->baremeModel->find($id);
@@ -175,7 +148,6 @@ class OperateurController extends BaseController
             return redirect()->back()->with('error', 'Les frais ne peuvent pas être négatifs.');
         }
 
-        // Vérifier chevauchement en excluant la tranche actuelle
         if (!$this->baremeModel->estSansChevauchemnt((int) $bareme['id_type_operation'], $min, $max, $id)) {
             return redirect()->back()->with('error', 'Cette tranche chevauche une tranche existante.');
         }
@@ -190,7 +162,6 @@ class OperateurController extends BaseController
         return redirect()->to("/operateur/baremes/{$bareme['id_type_operation']}")->with('success', 'Tranche modifiée.');
     }
 
-    // POST /operateur/baremes/supprimer/:id
     public function supprimerBareme(int $id): \CodeIgniter\HTTP\RedirectResponse
     {
         $bareme = $this->baremeModel->find($id);
@@ -198,10 +169,7 @@ class OperateurController extends BaseController
         return redirect()->to("/operateur/baremes/{$bareme['id_type_operation']}")->with('success', 'Tranche supprimée.');
     }
 
-    // ================================================================
-    // SITUATION DES COMPTES CLIENTS
-    // GET /operateur/comptes
-    // ================================================================
+
     public function situationComptes(): string
     {
         return view('operateur/comptes', [
@@ -209,17 +177,85 @@ class OperateurController extends BaseController
         ]);
     }
 
-    // ================================================================
-    // SITUATION DES GAINS
-    // GET /operateur/gains
-    // Règle : gains = somme frais retrait + transfert (dépôt exclut)
-    // ================================================================
+
     public function situationGains(): string
     {
         return view('operateur/gains', [
             'gains'       => $this->operateurModel->getSituationGains(),
             'total_gains' => $this->operateurModel->getTotalGains(),
-            'historique'  => $this->operateurModel->getHistoriqueGains(),
+            'historique'  => $this->operateurModel->getHistoriqueGainsFiltree(),
         ]);
     }
+
+    public function filtrerGains(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $filtres = [
+            'type'         => $this->request->getPost('type'),
+            'date_debut'   => $this->request->getPost('date_debut'),
+            'date_fin'     => $this->request->getPost('date_fin'),
+            'client'       => $this->request->getPost('client'),
+            'montant_min'  => $this->request->getPost('montant_min'),
+            'montant_max'  => $this->request->getPost('montant_max'),
+        ];
+
+        $filtres = array_filter($filtres, fn($v) => $v !== null && $v !== '');
+
+        $historique = $this->operateurModel->getHistoriqueGainsFiltree($filtres);
+
+        $retrait_total = 0;
+        $retrait_nb    = 0;
+        $transfert_total = 0;
+        $transfert_nb  = 0;
+
+        foreach ($historique as $t) {
+            if ($t['type_operation'] === 'retrait') {
+                $retrait_total += (float) $t['frais'];
+                $retrait_nb++;
+            } else {
+                $transfert_total += (float) $t['frais'];
+                $transfert_nb++;
+            }
+        }
+
+        return $this->response->setJSON([
+            'historique' => $historique,
+            'stats' => [
+                'retrait_total'   => $retrait_total,
+                'retrait_nb'      => $retrait_nb,
+                'transfert_total' => $transfert_total,
+                'transfert_nb'    => $transfert_nb,
+                'total_gains'     => $retrait_total + $transfert_total,
+                'total_nb'        => $retrait_nb + $transfert_nb,
+            ],
+        ]);
+    }
+    
+    public function modifierPrefixe(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        $prefixe = $this->prefixeModel->find($id);
+        if (!$prefixe) {
+            return redirect()->back()->with('error', 'Préfixe introuvable.');
+        }
+     
+        $debut       = trim($this->request->getPost('debut_numero'));
+        $idOperateur = (int) $this->request->getPost('id_operateur');
+     
+        if (!preg_match('/^\d{3}$/', $debut)) {
+            return redirect()->back()->with('error', 'Un préfixe doit contenir exactement 3 chiffres.');
+        }
+     
+        $existing = $this->prefixeModel->where('debut_numero', $debut)->where('id !=', $id)->first();
+        if ($existing) {
+            return redirect()->back()->with('error', "Le préfixe {$debut} est déjà utilisé.");
+        }
+     
+        $this->prefixeModel->update($id, [
+            'debut_numero' => $debut,
+            'id_operateur' => $idOperateur,
+        ]);
+     
+        return redirect()->to('/operateur/prefixes')->with('success', "Préfixe modifié en {$debut}.");
+    }
+    
+
 }
