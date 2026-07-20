@@ -17,16 +17,24 @@ Liantsoa (B2)
 - [ok] models (B2)
 - [ok] controllers (B2)
 
-## 3 - Situation gain via les differents frais
-Objectif : chaque operateur peut voir sa caisse, total des frais payes par les clients lors de la transaction retrait et transfert, en fonction des barèmes respectifs. On peut aussi voir l'historique des transactions.
-- [] base
-    - 
-- [] fonction
-    -
-- [] integration
-    - comment on implemente dans la view
-- [] design
-    - comment on va afficher les resultats
+## 3 - Situation des gains de l'opérateur (B2)
+Objectif : un opérateur consulte le total des frais collectés
+(retraits + transferts) et l'historique des transactions associées.
+- [ok] base
+    - [ok] vérifier comment relier transactions → opérateur
+    - [ok] écrire la requête SQL de gain (SUM frais WHERE type IN retrait, transfert)
+    - [ok] écrire la requête SQL d'historique global (toutes transactions)
+- [ok] fonction
+    - [ok] ajouter getGains(int $idOperateur) dans TransactionsModel
+    - [ok] ajouter getHistoriqueOperateur(int $idOperateur) dans TransactionsModel
+- [wip] intégration
+    - [ok] créer GainsController avec méthode index()
+    - [wip] récupérer l'opérateur connecté depuis la session
+    - [wip] passer gains + historique à la vue
+
+- [ ] design
+    - [ ] carte récapitulative : total retrait / total transfert / total général
+    - [ ] tableau historique : date, type, client, montant, frais
 
 ## 4 - Situation des comptes clients
 
