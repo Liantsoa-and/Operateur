@@ -64,19 +64,57 @@ Objectif : Le client peut consulter son solde sur son compte
 
 ## 7 - Faire un depot pour le client
 - Objectif : un client peux deposer
-- [ok] base
+- [ok] base (B1)
     - transaction
-- [] fonction
+- [ok] fonction (B1)
     - transactionModel.faireDepot(id,montant)
-- [] integration
+- [ok] integration (B1)
     - routes `client/depot , clientController::depot`
     - ClientController.depot()
-- [] design
+- [ok] design (B1)
     - Appeler cette fonction depuis un Ajax
 ## 8 - Faire un retrait pour le client
+Objectif : un client peut retirer de l'argent (frais selon barème, solde suffisant)
+- [ok] base (B1)
+    - [ok] vérifier la tranche de barème applicable (type = retrait)
+    - [ok] vérifier solde suffisant (montant + frais)
+- [ok] fonction (B1)
+    - [ok] TransactionsModel.faireRetrait(idClient, montant)
+- [ok] intégration (B1)
+    - [ok] routes `client/retrait, ClientController::retrait` (GET + POST)
+    - [ok] ClientController.retrait()
+- [ok] design (B1)
+    - [ok] formulaire de saisie du montant
+    - [ok] affichage du message (frais appliqués, total débité, ou erreur solde insuffisant)
+
 
 ## 9 - Faire un transfert pour le client
+## 9 - Faire un transfert pour le client
+Objectif : un client peut transférer de l'argent à un autre client (frais selon barème, solde suffisant)
+- [ok] base (B1)
+    - [ok] vérifier que le numéro destinataire est valide (préfixe reconnu)
+    - [ok] vérifier que le destinataire existe et n'est pas le client lui-même
+    - [ok] vérifier la tranche de barème applicable (type = transfert)
+    - [ok] vérifier solde suffisant (montant + frais)
+- [ok] fonction (B1)
+    - [ok] TransactionsModel.faireTransfert(idClient, numeroDestinataire, montant)
+- [ok] intégration (B1)
+    - [ok] routes `client/transfert, ClientController::transfert` (GET + POST)
+    - [ok] ClientController.transfert()
+- [ok] design (B1)
+    - [ok] formulaire (numéro destinataire + montant)
+    - [ok] affichage du message (frais, destinataire, ou erreur)
+
 
 ## 10 - Client peut voir son historique de transactions (depot, retrait, transfert)
-
+Objectif : le client consulte l'ensemble de ses opérations (dépôts, retraits, transferts envoyés/reçus)
+- [ok] base (B1)
+    - [ok] écrire la requête SQL d'historique (impact solde selon type + numéro correspondant pour transfert)
+- [ok] fonction (B1)
+    - [ok] TransactionsModel.getHistoriqueClient(idClient)
+- [ok] intégration (B1)
+    - [ok] route `client/historique, ClientController::historique`
+    - [ok] ClientController.historique()
+- [ok] design (B1)
+    - [ok] tableau : date, type, montant, frais, impact sur le solde, numéro correspondant (transfert)
 
