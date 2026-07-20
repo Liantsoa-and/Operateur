@@ -32,3 +32,5 @@ $routes->post('/client/retrait',     'ClientController::retrait');
 $routes->get('/client/transfert',    'ClientController::transfert');
 $routes->post('/client/transfert',   'ClientController::transfert');
 $routes->get('/client/historique',   'ClientController::historique');
+
+$routes->post('operateur/commission', 'OperateurController::modifierCommission');

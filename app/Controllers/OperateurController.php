@@ -8,6 +8,7 @@ use App\Models\PrefixeModel;
 use App\Models\TypeOperationModel;
 use App\Models\BaremeModel;
 use App\Models\ClientModel;
+use App\Models\ConfigOperateurModel;
 
 class OperateurController extends BaseController
 {
@@ -16,6 +17,7 @@ class OperateurController extends BaseController
     protected TypeOperationModel  $typeOpModel;
     protected BaremeModel         $baremeModel;
     protected ClientModel         $clientModel;
+    protected ConfigOperateurModel $configOperateurModel;
 
     public function __construct()
     {
@@ -24,17 +26,32 @@ class OperateurController extends BaseController
         $this->typeOpModel    = new TypeOperationModel();
         $this->baremeModel    = new BaremeModel();
         $this->clientModel    = new ClientModel();
+        $this->configOperateurModel = new ConfigOperateurModel();
     }
 
 
     public function index(): string
     {
         return view('operateur/dashboard', [
-            'total_gains'  => $this->operateurModel->getTotalGains(),
-            'nb_clients'   => (new \App\Models\ClientModel())->countAll(),
+            'total_gains'         => $this->operateurModel->getTotalGains(),
+            'nb_clients'          => (new \App\Models\ClientModel())->countAll(),
+            'commission_actuelle' => $this->configOperateurModel->getCommissionActuelle(),
         ]);
     }
 
+    public function modifierCommission(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        $taux = (float) $this->request->getPost('commission_inter');
+
+        if ($taux < 0 || $taux > 100) {
+            return redirect()->back()->with('error', 'Le taux de commission doit être compris entre 0 et 100.');
+        }
+
+        $this->configOperateurModel->setCommission($taux);
+
+        return redirect()->to('/operateur')->with('success', "Commission inter-opérateur mise à jour à {$taux} %.");
+    }
+    
     public function prefixes(): string
     {
         $prefixes = $this->prefixeModel
@@ -207,7 +224,7 @@ class OperateurController extends BaseController
             'historique'     => $this->operateurModel->getHistoriqueGainsFiltree(),
         ]);
     }
-    
+
     public function filtrerGains(): \CodeIgniter\HTTP\ResponseInterface
     {
         $filtres = [

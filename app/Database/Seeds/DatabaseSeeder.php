@@ -15,12 +15,14 @@ class DatabaseSeeder extends Seeder
         $this->db->table('client')->truncate();
         $this->db->table('prefixe')->truncate();
         $this->db->table('operateur')->truncate();
+        $this->db->table('config_operateur')->truncate();
 
         $this->call('OperateurSeeder');
         $this->call('PrefixeSeeder');
         $this->call('ClientSeeder');
         $this->call('TypeOperationSeeder');
         $this->call('BaremeSeeder');
+        $this->call('ConfigOperateurSeeder');
         $this->call('TransactionSeeder');
     }
 }

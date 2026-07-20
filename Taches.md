@@ -125,7 +125,7 @@ Objectif : le client consulte l'ensemble de ses opérations (dépôts, retraits,
 
 # V2 - Fonctionnalités inter-opérateurs (B2)
 
-## 1 - Table config_operateur + migration
+## 1 - Table config_operateur + migration (B2)
 
 - [ok] base
     - [ok] créer une nouvelle migration (ne pas modifier InitBase)
@@ -133,28 +133,28 @@ Objectif : le client consulte l'ensemble de ses opérations (dépôts, retraits,
     - [ok] ajouter colonne `commission_appliquee DECIMAL null` dans `transactions`
     - [ok] mettre à jour `base.sql`
 
-## 2 - Configuration des préfixes externes (opérateurs tiers)
+## 2 - Configuration des préfixes externes (opérateurs tiers) (B2)
 
 - [ok] base
     - [ok] vérifier que Airtel, Orange etc. existent dans `operateur`
     - [ok] vérifier que leurs préfixes existent dans `prefixe`
-- [ ] intégration
-    - [ ] adapter la vue `prefixes/index.php` : distinguer visuellement
+- [ok] intégration
+    - [ok] adapter la vue `prefixes/index.php` : distinguer visuellement
           les préfixes de notre opérateur vs les autres
-    - [ ] adapter `ajouterPrefixe()` : permettre de choisir l'opérateur cible
+    - [ok] adapter `ajouterPrefixe()` : permettre de choisir l'opérateur cible
 
-## 3 - Configuration de la commission inter-opérateur
+## 3 - Configuration de la commission inter-opérateur (B2)
 
-- [ ] modèle
-    - [ ] créer `ConfigOperateurModel` avec :
-        - [ ] `getCommissionActuelle()` : retourne le taux courant
-        - [ ] `setCommission(float $taux)` : insère une nouvelle ligne
-- [ ] intégration
-    - [ ] ajouter une section dans le dashboard opérateur
-    - [ ] formulaire pour modifier le %
-    - [ ] ajouter routes GET/POST dans `OperateurController`
+- [ok] modèle
+    - [ok] créer `ConfigOperateurModel` avec :
+        - [ok] `getCommissionActuelle()` : retourne le taux courant
+        - [ok] `setCommission(float $taux)` : insère une nouvelle ligne
+- [ok] intégration
+    - [ok] ajouter une section dans le dashboard opérateur
+    - [ok] formulaire pour modifier le %
+    - [ok] ajouter routes GET/POST dans `OperateurController`
 
-## 4 - Transfert inter-opérateur avec commission
+## 4 - Transfert inter-opérateur avec commission (B2)
 
 - [ ] modèle
     - [ ] ajouter `estInterOperateur(string $numeroExp, string $numeroDest): bool`
