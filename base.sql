@@ -54,8 +54,9 @@ SELECT
     COALESCE(SUM(
         CASE 
             WHEN to_.type = 'depot' THEN t.montant
-            WHEN to_.type IN ('retrait', 'transfert') THEN -t.montant_total
-            WHEN to_.type = 'transfert' AND t.id_destinataire = c.id THEN t.montant
+            WHEN to_.type = 'retrait' THEN -t.montant_total
+            WHEN to_.type = 'transfert' AND c.id = t.id_client THEN -t.montant_total   -- expéditeur
+            WHEN to_.type = 'transfert' AND c.id = t.id_destinataire THEN t.montant -- destinataire
             ELSE 0
         END
     ), 0) AS solde
