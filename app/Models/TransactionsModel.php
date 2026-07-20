@@ -20,10 +20,6 @@ class TransactionsModel extends Model
         'id_bareme',
     ];
 
-    // ----------------------------------------------------------------
-    // DEPOT
-    // Règles : montant > 0, pas de frais, validé automatiquement
-    // ----------------------------------------------------------------
     public function faireDepot(int $idClient, float $montant): array
     {
         if ($montant <= 0) {
@@ -58,12 +54,7 @@ class TransactionsModel extends Model
         return ['success' => true, 'transaction' => $data];
     }
 
-    // ----------------------------------------------------------------
-    // RETRAIT
-    // Règles : montant > 0, solde suffisant (montant + frais), frais selon barème
-    // ----------------------------------------------------------------
-    public function faireRetrait(int $idClient, float $montant): array
-    {
+    public function faireRetrait(int $idClient, float $montant): array{
         if ($montant <= 0) {
             return ['success' => false, 'error' => 'Le montant doit être strictement positif.'];
         }
@@ -105,13 +96,7 @@ class TransactionsModel extends Model
         return ['success' => true, 'transaction' => $data, 'frais' => $frais, 'total_debite' => $totalDebit];
     }
 
-    // ----------------------------------------------------------------
-    // TRANSFERT
-    // Règles : destinataire valide, montant > 0, solde suffisant (montant + frais)
-    //          destinataire reçoit uniquement le montant, frais conservés opérateur
-    // ----------------------------------------------------------------
-    public function faireTransfert(int $idClient, string $numeroDestinataire, float $montant): array
-    {
+    public function faireTransfert(int $idClient, string $numeroDestinataire, float $montant): array{
         if ($montant <= 0) {
             return ['success' => false, 'error' => 'Le montant doit être strictement positif.'];
         }
@@ -174,12 +159,7 @@ class TransactionsModel extends Model
         ];
     }
 
-    // ----------------------------------------------------------------
-    // HISTORIQUE d'un client
-    // Règle : date, type, montant, frais, solde après opération + numéro correspondant pour transfert
-    // ----------------------------------------------------------------
-    public function getHistoriqueClient(int $idClient): array
-    {
+    public function getHistoriqueClient(int $idClient): array{
         return $this->db->query("
             SELECT
                 t.id,
@@ -210,21 +190,62 @@ class TransactionsModel extends Model
         ", ['id' => $idClient])->getResultArray();
     }
 
-    // ----------------------------------------------------------------
-    // Helpers privés
-    // ----------------------------------------------------------------
+    public function getHistoriqueOperateur(int $idOperateur){
+        return $this->db->query("
+            SELECT
+                t.id,
+                t.numero_transaction,
+                t.date_transaction,
+                to_.type AS type_operation,
+                t.montant,
+                t.frais,
+                CASE
+                    WHEN to_.type = 'depot'     THEN t.montant
+                    WHEN to_.type IN ('retrait', 'transfert') AND t.id_client = :id: THEN -(t.montant + t.frais)
+                    WHEN to_.type = 'transfert' AND t.id_destinataire = :id: THEN t.montant
+                    ELSE 0
+                END AS impact_solde,
+                CASE
+                    WHEN to_.type = 'transfert' AND t.id_client = :id:          THEN dest.numero
+                    WHEN to_.type = 'transfert' AND t.id_destinataire = :id:    THEN src.numero
+                    ELSE NULL
+                END AS numero_correspondant
+            FROM transactions t
+            JOIN bareme b ON t.id_bareme = b.id
+            JOIN type_operation to_ ON b.id_type_operation = to_.id
+            LEFT JOIN client dest ON dest.id = t.id_destinataire
+            LEFT JOIN client src  ON src.id  = t.id_client
+            WHERE t.id_client = :id:
+               OR t.id_destinataire = :id:
+            ORDER BY t.date_transaction DESC
+        ", ['id' => $idOperateur])->getResultArray();
+    }
 
-    // Génère un numéro de transaction unique (format : TXN-YYYYMMDD-microtime)
-    private function _genererNumero(): string
-    {
+    public function getGains(int $idOperateur){
+        return $this->db->query("
+            SELECT 
+                o.id AS id_operateur,
+                o.nom,
+                COALESCE(SUM(t.frais), 0) AS gain
+            FROM operateur o
+            JOIN prefixe p ON p.id_operateur = o.id
+            JOIN client c ON SUBSTR(c.numero, 1, 3) = p.debut_numero
+            JOIN transactions t ON t.id_client = c.id
+            JOIN bareme b ON t.id_bareme = b.id
+            JOIN type_operation to_ ON b.id_type_operation = to_.id
+            WHERE o.id = :idOperateur
+            GROUP BY o.id, o.nom
+        ", ['idOperateur' => $idOperateur])->getResultArray();
+    }
+
+    private function _genererNumero(): string{
         return 'TXN-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
     }
 
-    // Fallback : premier barème du type (utilisé pour le dépôt si tranche non obligatoire)
-    private function _getBaremeParDefaut(int $idTypeOperation): int|null
-    {
+    private function _getBaremeParDefaut(int $idTypeOperation): int|null{
         $baremeModel = new BaremeModel();
         $row = $baremeModel->where('id_type_operation', $idTypeOperation)->first();
         return $row ? (int) $row['id'] : null;
     }
+
 }
