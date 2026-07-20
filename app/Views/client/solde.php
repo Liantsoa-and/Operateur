@@ -298,10 +298,11 @@
         <!-- Header -->
         <div class="header">
             <h1>Mobile Money</h1>
+            <a href="historique" class="logout-btn">Voir historique</a>
             <a href="/logout" class="logout-btn">Déconnexion</a>
         </div>
 
-        
+
 
         <!-- Alerts -->
         <?php if (session()->has('error')): ?>
