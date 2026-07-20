@@ -1,0 +1,40 @@
+:root {
+    --primary: #1a2e44;
+    --accent: #4e9af1;
+    --success: #198754;
+    --danger: #dc3545;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.main {
+    margin-left: 240px;
+    padding: 2rem;
+    min-height: 100vh;
+    background: #f0f4f8;
+}
+
+/* Cards modernes */
+.card-modern {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    transition: all 0.2s;
+}
+
+.card-modern:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Boutons cohérents */
+.btn-primary {
+    background: var(--accent);
+    border: none;
+}
+
+.btn-outline-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+}

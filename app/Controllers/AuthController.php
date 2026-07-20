@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\ClientModel;
+use CodeIgniter\HTTP\ResponseInterface;
 
 class AuthController extends BaseController
 {
@@ -16,7 +17,7 @@ class AuthController extends BaseController
 
     // GET /login
     // Affiche le formulaire de saisie du numéro
-    public function index(): string
+    public function index(): string|ResponseInterface
     {
         if (session()->get('client_id')) {
             return redirect()->to('/client/solde');
