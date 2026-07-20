@@ -24,7 +24,7 @@
                                    min="500" step="100" placeholder="Ex: 10000" required>
                         </div>
 
-                        <div class="form-check mb-3">
+                        <div id="inclureFraisWrapper" class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="inclure_frais" id="inclure_frais" value="1">
                             <label class="form-check-label" for="inclure_frais">
                                 Inclure les frais dans le montant saisi (le destinataire reçoit moins)
@@ -59,6 +59,7 @@
     const destinataireInput = document.getElementById('destinataire');
     const montantInput      = document.getElementById('montant');
     const inclureFraisInput = document.getElementById('inclure_frais');
+    const inclureFraisWrap  = document.getElementById('inclureFraisWrapper');
     const alerteDiv          = document.getElementById('alerteCommission');
     const tauxTexte          = document.getElementById('tauxCommissionTexte');
     const montantTexte       = document.getElementById('montantCommissionTexte');
@@ -80,6 +81,8 @@
         if (!destinataire || !montant) {
             alerteDiv.classList.add('d-none');
             recapDiv.classList.add('d-none');
+            inclureFraisWrap.classList.remove('d-none');
+            inclureFraisInput.disabled = false;
             return;
         }
 
@@ -102,8 +105,13 @@
                     tauxTexte.textContent    = data.taux_commission;
                     montantTexte.textContent = fmt(data.commission);
                     alerteDiv.classList.remove('d-none');
+                    inclureFraisWrap.classList.add('d-none');
+                    inclureFraisInput.checked = false;
+                    inclureFraisInput.disabled = true;
                 } else {
                     alerteDiv.classList.add('d-none');
+                    inclureFraisWrap.classList.remove('d-none');
+                    inclureFraisInput.disabled = false;
                 }
 
                 recapFrais.textContent = fmt(data.frais + data.commission) + ' Ar';
