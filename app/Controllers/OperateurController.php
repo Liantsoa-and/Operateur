@@ -219,6 +219,7 @@ class OperateurController extends BaseController
         return view('operateur/gains', [
             'gains'       => $this->operateurModel->getSituationGains(),
             'total_gains' => $this->operateurModel->getTotalGains(),
+            'historique'  => $this->operateurModel->getHistoriqueGains(),
         ]);
     }
 }

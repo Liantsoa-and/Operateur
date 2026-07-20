@@ -43,6 +43,26 @@ class OperateurModel extends Model
         ")->getResultArray();
     }
 
+    // Historique détaillé des transactions (retrait + transfert)
+    public function getHistoriqueGains(): array
+    {
+        return $this->db->query("
+            SELECT
+                t.numero_transaction,
+                t.date_transaction,
+                to_.type AS type_operation,
+                t.montant,
+                t.frais,
+                c.numero AS numero_client
+            FROM transactions t
+            JOIN bareme b ON t.id_bareme = b.id
+            JOIN type_operation to_ ON b.id_type_operation = to_.id
+            JOIN client c ON c.id = t.id_client
+            WHERE to_.type IN ('retrait', 'transfert')
+            ORDER BY t.date_transaction DESC
+        ")->getResultArray();
+    }
+
     // Total global des gains
     public function getTotalGains(): float
     {
