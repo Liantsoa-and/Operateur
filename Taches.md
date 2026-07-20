@@ -27,11 +27,10 @@ Objectif : un opérateur consulte le total des frais collectés
 - [ok] fonction
     - [ok] ajouter getGains(int $idOperateur) dans TransactionsModel
     - [ok] ajouter getHistoriqueOperateur(int $idOperateur) dans TransactionsModel
-- [wip] intégration
+- [ok] intégration
     - [ok] créer GainsController avec méthode index()
-    - [wip] récupérer l'opérateur connecté depuis la session
-    - [wip] passer gains + historique à la vue
-
+    - [ok] récupérer l'opérateur connecté depuis la session
+    - [ok] passer gains + historique à la vue
 - [ ] design
     - [ ] carte récapitulative : total retrait / total transfert / total général
     - [ ] tableau historique : date, type, client, montant, frais
