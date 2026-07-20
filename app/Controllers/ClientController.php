@@ -88,7 +88,7 @@ class ClientController extends BaseController
     {
         if ($redir = $this->requireAuth()) return $redir;
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $montant = (float) $this->request->getPost('montant');
 
             $result = $this->transactionsModel->faireRetrait($this->getClientId(), $montant);
@@ -122,7 +122,7 @@ class ClientController extends BaseController
     {
         if ($redir = $this->requireAuth()) return $redir;
 
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             $numeroDestinataire = trim($this->request->getPost('numero_destinataire'));
             $montant            = (float) $this->request->getPost('montant');
 
