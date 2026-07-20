@@ -21,5 +21,6 @@ $routes->post('operateur/baremes/supprimer/(:num)','OperateurController::supprim
 
 $routes->get('operateur/comptes',                  'OperateurController::situationComptes');
 $routes->get('operateur/gains',                    'OperateurController::situationGains');
+$routes->post('operateur/gains/filtrer',           'OperateurController::filtrerGains');
 
 $routes->get('/client/solde', 'ClientController::solde');
