@@ -31,7 +31,9 @@ Objectif : chaque operateur peut voir sa caisse, total des frais payes par les c
 ## 4 - Situation des comptes clients
 
 ## 5 - Login client automatique (si le numero n'existe pas, il est cree automatiquement) (B1)
-Objectif : Le client peut conulter son solde sur son compte 
+
+## 6 - Voir Solde pour le client
+Objectif : Le client peut consulter son solde sur son compte 
 - [ok] base (B1)
     - appeler la view v_solde
 - [ok] fonction (B1)
@@ -42,8 +44,6 @@ Objectif : Le client peut conulter son solde sur son compte
     - Mettre dans un  attribut "solde" puis l'anvoyer dans le view
 - [ok] design (B1)
     - Utiliser la variable solde envoyer depuis le Controller
-
-## 6 - Voir Solde pour le client
 
 ## 7 - Faire un depot pour le client
 
