@@ -74,7 +74,59 @@
         </div>
     </div>
 </div>
+<p class="section-title">Gains intra vs inter-opérateurs</p>
+<div class="row g-4 mb-5">
+    <div class="col-sm-6">
+        <div class="card card-modern h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-3"><i class="bi bi-people fs-3"></i></div>
+                <div>
+                    <h3 class="fw-bold mb-0"><?= number_format($gains_intra['total_frais'] ?? 0, 0, ',', ' ') ?> Ar</h3>
+                    <p class="text-muted mb-0">Gains intra (même opérateur)</p>
+                    <small class="text-muted"><?= $gains_intra['nb'] ?? 0 ?> transaction(s)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="card card-modern h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3"><i class="bi bi-globe fs-3"></i></div>
+                <div>
+                    <h3 class="fw-bold mb-0"><?= number_format($gains_inter['total_commission'] ?? 0, 0, ',', ' ') ?> Ar</h3>
+                    <p class="text-muted mb-0">Gains inter (commissions)</p>
+                    <small class="text-muted"><?= $gains_inter['nb'] ?? 0 ?> transaction(s)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<p class="section-title">Montants à reverser par opérateur externe</p>
+<div class="card card-modern mb-5">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr><th>Opérateur</th><th class="text-end">Nb transactions</th><th class="text-end">Montant à reverser</th></tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($reversements)): ?>
+                        <tr><td colspan="3" class="text-center py-4 text-muted">Aucun montant à reverser.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($reversements as $r): ?>
+                        <tr>
+                            <td><?= esc($r['nom_operateur']) ?></td>
+                            <td class="text-end"><?= $r['nb_transactions'] ?></td>
+                            <td class="text-end fw-bold"><?= number_format((float)$r['montant_a_reverser'], 0, ',', ' ') ?> Ar</td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 <!-- Filtres -->
 <p class="section-title">Filtres</p>
 <div class="card card-modern mb-4">

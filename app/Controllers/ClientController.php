@@ -118,39 +118,46 @@ class ClientController extends BaseController
     // POST /client/transfert
     // Transfert : vérifie préfixe destinataire, frais selon barème, solde suffisant
     // ----------------------------------------------------------------
-    public function transfert(): string|\CodeIgniter\HTTP\RedirectResponse
-    {
-        if ($redir = $this->requireAuth()) return $redir;
+public function transfert(): string|\CodeIgniter\HTTP\RedirectResponse
+{
+    if ($redir = $this->requireAuth()) return $redir;
 
-        if ($this->request->getMethod() === 'POST') {
-            $numeroDestinataire = trim($this->request->getPost('numero_destinataire'));
-            $montant            = (float) $this->request->getPost('montant');
+    if ($this->request->getMethod() === 'POST') {
+        $numeroDestinataire = trim($this->request->getPost('destinataire'));
+        $montant            = (float) $this->request->getPost('montant');
+        $inclureFrais       = (bool) $this->request->getPost('inclure_frais');
 
-            $result = $this->transactionsModel->faireTransfert(
-                $this->getClientId(),
-                $numeroDestinataire,
-                $montant
-            );
+        $result = $this->transactionsModel->faireTransfert(
+            $this->getClientId(),
+            $numeroDestinataire,
+            $montant,
+            $inclureFrais
+        );
 
-            if (!$result['success']) {
-                return redirect()->back()->with('error', $result['error']);
-            }
-
-            $msg = sprintf(
-                'Transfert de %s Ar vers %s effectué. Frais : %s Ar.',
-                number_format($montant, 2),
-                $result['destinataire'],
-                number_format($result['frais'], 2)
-            );
-
-            return redirect()->to('/client/solde')->with('success', $msg);
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['error']);
         }
 
-        return view('client/transfert', [
-            'numero' => session()->get('client_numero'),
-            'solde'  => $this->clientModel->getSolde($this->getClientId()),
-        ]);
+        $msg = sprintf(
+            'Transfert effectué vers %s. Débité : %s Ar. Reçu par le destinataire : %s Ar. Frais : %s Ar.',
+            $result['destinataire'],
+            number_format($result['total_debite'], 2),
+            number_format($result['montant_net_recu'], 2),
+            number_format($result['frais'], 2)
+        );
+
+        if ($result['commission_appliquee'] > 0) {
+            $msg .= sprintf(' Commission inter-opérateur : %s Ar.', number_format($result['commission_appliquee'], 2));
+        }
+
+        return redirect()->to('/client/solde')->with('success', $msg);
     }
+
+    return view('client/transfert', [
+        'numero' => session()->get('client_numero'),
+        'solde'  => $this->clientModel->getSolde($this->getClientId()),
+    ]);
+}
 
     // ----------------------------------------------------------------
     // GET /client/historique
@@ -182,6 +189,100 @@ public function historique(): string|\CodeIgniter\HTTP\RedirectResponse
         'solde'        => $this->clientModel->getSolde($idClient),
         'transactions' => $transactions,
         'filters'      => $filters,
+    ]);
+}
+
+public function verifierCommission(): \CodeIgniter\HTTP\ResponseInterface
+{
+    if (!$this->getClientId()) {
+        return $this->response->setStatusCode(401)->setJSON(['error' => 'Non authentifié.']);
+    }
+
+    $numeroDestinataire = trim($this->request->getPost('destinataire'));
+    $montant            = (float) $this->request->getPost('montant');
+    $inclureFrais       = (bool) $this->request->getPost('inclure_frais');
+
+    $prefixeModel = new \App\Models\PrefixeModel();
+    $configModel  = new \App\Models\ConfigOperateurModel();
+    $baremeModel  = new \App\Models\BaremeModel();
+    $typeOpModel  = new \App\Models\TypeOperationModel();
+
+    if ($numeroDestinataire === '' || !$prefixeModel->estNumerovalide($numeroDestinataire)) {
+        return $this->response->setJSON(['valide' => false]);
+    }
+
+    $numeroExpediteur = session()->get('client_numero');
+    $interOperateur   = $prefixeModel->estInterOperateur($numeroExpediteur, $numeroDestinataire);
+
+    $frais = 0.0;
+    $tauxCommission = 0.0;
+    $commission     = 0.0;
+    $montantNet     = $montant;
+    $totalDebit     = $montant;
+
+    if ($montant > 0) {
+        $idTypeTransfert = $typeOpModel->getIdByType(\App\Models\TypeOperationModel::TRANSFERT);
+        $tranche         = $baremeModel->getTranche($idTypeTransfert, $montant);
+        $frais           = $tranche ? (float) $tranche['frais'] : 0.0;
+
+        if ($interOperateur) {
+            $tauxCommission = $configModel->getCommissionActuelle();
+            $commission     = round($montant * $tauxCommission / 100, 2);
+        }
+
+        $fraisTotal = $frais + $commission;
+
+        if ($inclureFrais) {
+            $montantNet = $montant - $fraisTotal;
+            $totalDebit = $montant;
+        } else {
+            $montantNet = $montant;
+            $totalDebit = $montant + $fraisTotal;
+        }
+    }
+
+    return $this->response->setJSON([
+        'valide'          => true,
+        'inter_operateur' => $interOperateur,
+        'taux_commission' => $tauxCommission,
+        'commission'      => $commission,
+        'frais'           => $frais,
+        'montant_net'     => $montantNet,
+        'total_debit'     => $totalDebit,
+    ]);
+}
+public function transfertMultiple(): string|\CodeIgniter\HTTP\RedirectResponse
+{
+    if ($redir = $this->requireAuth()) return $redir;
+
+    if ($this->request->getMethod() === 'POST') {
+        $numeros = array_filter(array_map('trim', $this->request->getPost('destinataires') ?? []));
+        $montant = (float) $this->request->getPost('montant');
+
+        $result = $this->transactionsModel->faireTransfertMultiple(
+            $this->getClientId(),
+            $numeros,
+            $montant
+        );
+
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['error'])->withInput();
+        }
+
+        $msg = sprintf(
+            'Envoi multiple effectué vers %d destinataires. %s Ar chacun (frais : %s Ar chacun). Total débité : %s Ar.',
+            $result['nb_destinataires'],
+            number_format($result['montant_par_dest'], 2),
+            number_format($result['frais_par_dest'], 2),
+            number_format($result['total_debite'], 2)
+        );
+
+        return redirect()->to('/client/solde')->with('success', $msg);
+    }
+
+    return view('client/transfert_multiple', [
+        'numero' => session()->get('client_numero'),
+        'solde'  => $this->clientModel->getSolde($this->getClientId()),
     ]);
 }
 }

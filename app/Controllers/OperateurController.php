@@ -9,6 +9,7 @@ use App\Models\TypeOperationModel;
 use App\Models\BaremeModel;
 use App\Models\ClientModel;
 use App\Models\ConfigOperateurModel;
+use App\Models\TransactionsModel;
 
 class OperateurController extends BaseController
 {
@@ -18,6 +19,8 @@ class OperateurController extends BaseController
     protected BaremeModel         $baremeModel;
     protected ClientModel         $clientModel;
     protected ConfigOperateurModel $configOperateurModel;
+    protected TransactionsModel $transactionsModel;
+    private const NOTRE_OPERATEUR_ID = 1; // Telma
 
     public function __construct()
     {
@@ -27,6 +30,7 @@ class OperateurController extends BaseController
         $this->baremeModel    = new BaremeModel();
         $this->clientModel    = new ClientModel();
         $this->configOperateurModel = new ConfigOperateurModel();
+        $this->transactionsModel    = new TransactionsModel(); 
     }
 
 
@@ -51,7 +55,7 @@ class OperateurController extends BaseController
 
         return redirect()->to('/operateur')->with('success', "Commission inter-opérateur mise à jour à {$taux} %.");
     }
-    
+
     public function prefixes(): string
     {
         $prefixes = $this->prefixeModel
@@ -213,8 +217,11 @@ class OperateurController extends BaseController
                 $transfert_nb    = (int)   $g['nb_transactions'];
             }
         }
-
+        $gains = $this->transactionsModel->getGains(self::NOTRE_OPERATEUR_ID);
         return view('operateur/gains', [
+            'gains_intra'   => $gains['intra'],
+            'gains_inter'   => $gains['inter'],
+            'reversements'  => $gains['reversements'],
             'gains'          => $gainsData,
             'retrait_total'  => $retrait_total,
             'retrait_nb'     => $retrait_nb,

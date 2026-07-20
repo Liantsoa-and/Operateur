@@ -36,4 +36,18 @@ class PrefixeModel extends Model
     {
         return $this->where('id_operateur', $idOperateur)->findAll();
     }
+
+    // Retourne true si les deux numéros appartiennent à des opérateurs différents
+    public function estInterOperateur(string $numeroExp, string $numeroDest): bool
+    {
+        $prefixeExp  = $this->trouverPrefixe($numeroExp);
+        $prefixeDest = $this->trouverPrefixe($numeroDest);
+
+        if (!$prefixeExp || !$prefixeDest) {
+            // Un des deux numéros n'a pas de préfixe valide : à gérer en amont
+            return false;
+        }
+
+        return (int) $prefixeExp['id_operateur'] !== (int) $prefixeDest['id_operateur'];
+    }
 }

@@ -61,6 +61,9 @@
         <a href="<?= site_url('client/transfert') ?>" class="nav-link <?= url_is('client/transfert') ? 'active' : '' ?>">
             <i class="bi bi-arrow-left-right me-2"></i> Transfert
         </a>
+        <a href="<?= site_url('client/transfert-multiple') ?>" class="nav-link <?= (uri_string() === 'client/transfert-multiple') ? 'active' : '' ?>">
+            <i class="bi bi-people me-2"></i>Envoi multiple
+        </a>
     </nav>
 
     <div class="position-absolute bottom-0 w-100 p-3">

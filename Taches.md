@@ -156,110 +156,48 @@ Objectif : le client consulte l'ensemble de ses opérations (dépôts, retraits,
 
 ## 4 - Transfert inter-opérateur avec commission (B2)
 
-- [ ] modèle
-    - [ ] ajouter `estInterOperateur(string $numeroExp, string $numeroDest): bool`
+- [ok] modèle
+    - [ok] ajouter `estInterOperateur(string $numeroExp, string $numeroDest): bool`
           dans `PrefixeModel` (comparer id_operateur des deux préfixes)
-    - [ ] modifier `faireTransfert()` dans `TransactionsModel` :
-        - [ ] détecter si inter-opérateur
-        - [ ] lire `commission_inter` depuis `config_operateur`
-        - [ ] calculer `commission_appliquee = % × montant`
-        - [ ] total frais = frais barème + commission_appliquee
-        - [ ] sauvegarder `commission_appliquee` dans la transaction
-- [ ] intégration
-    - [ ] adapter vue transfert : afficher commission si inter-opérateur (AJAX)
+    - [ok] modifier `faireTransfert()` dans `TransactionsModel` :
+        - [ok] détecter si inter-opérateur
+        - [ok] lire `commission_inter` depuis `config_operateur`
+        - [ok] calculer `commission_appliquee = % × montant`
+        - [ok] total frais = frais barème + commission_appliquee
+        - [ok] sauvegarder `commission_appliquee` dans la transaction
+- [ok] intégration
+    - [ok] adapter vue transfert : afficher commission si inter-opérateur (AJAX)
 
-## 5 - Situation des gains séparée
+## 5 - Situation des gains séparée (B2)
 
-- [ ] modèle
-    - [ ] modifier `getGains()` :
-        - [ ] gains intra (frais sur clients même opérateur)
-        - [ ] gains inter (commission_appliquee par opérateur externe)
-        - [ ] montants à reverser à chaque opérateur externe
-- [ ] intégration
-    - [ ] adapter `gains.php` : deux sections distinctes
-    - [ ] tableau "Montants à reverser par opérateur"
+- [ok] modèle
+    - [ok] modifier `getGains()` :
+        - [ok] gains intra (frais sur clients même opérateur)
+        - [ok] gains inter (commission_appliquee par opérateur externe)
+        - [ok] montants à reverser à chaque opérateur externe
+- [ok] intégration
+    - [ok] adapter `gains.php` : deux sections distinctes
+    - [ok] tableau "Montants à reverser par opérateur"
 
-## 6 - Option "inclure frais" dans le transfert
+## 6 - Option "inclure frais" dans le transfert (B2)
 
-- [ ] modèle
-    - [ ] modifier `faireTransfert()` : paramètre `inclure_frais`
-    - [ ] si true : montant_net = montant - frais_total, destinataire reçoit montant_net
-    - [ ] vérifier montant_net > 0
-- [ ] intégration
-    - [ ] ajouter case à cocher dans vue transfert
-    - [ ] afficher récapitulatif avant confirmation
+- [ok] modèle
+    - [ok] modifier `faireTransfert()` : paramètre `inclure_frais`
+    - [ok] si true : montant_net = montant - frais_total, destinataire reçoit montant_net
+    - [ok] vérifier montant_net > 0
+- [ok] intégration
+    - [ok] ajouter case à cocher dans vue transfert
+    - [ok] afficher récapitulatif avant confirmation
 
-## 7 - Envoi multiple
+## 7 - Envoi multiple (B2)
 
-- [ ] modèle
-    - [ ] créer `faireTransfertMultiple(int $idClient, array $numeros, float $montant)`
-    - [ ] montant_par_destinataire = montant / count(numeros)
-    - [ ] valider chaque numéro
-    - [ ] vérifier solde suffisant pour le total
-    - [ ] insérer une transaction par destinataire
-- [ ] intégration
-    - [ ] champ dynamique pour ajouter des numéros dans vue transfert
-    - [ ] afficher récapitulatif avant envoi
+- [ok] modèle
+    - [ok] créer `faireTransfertMultiple(int $idClient, array $numeros, float $montant)`
+    - [ok] montant_par_destinataire = montant / count(numeros)
+    - [ok] valider chaque numéro
+    - [ok] vérifier solde suffisant pour le total
+    - [ok] insérer une transaction par destinataire
+- [ok] intégration
+    - [ok] champ dynamique pour ajouter des numéros dans vue transfert
+    - [ok] afficher récapitulatif avant envoi
 
----
-# (B1)
-
-## Situation actuel de notre systeme : 
-- On peut envoyer de l'argent vers d'autre operateur
-- et notre systeme ne simule pas une seule operateur
-- IL FAUT CHOISIR UNE SEULE OPERATEUR (urgent)
-### Todo : 
-- pour routes "/" il faut avoir deux cards pour dirigedr vers operateur ou connexion client
-
-- fonction : 
-    - HomeController.choice() doit rediriger vers une view choice.php
-    - Dans OperateurController.index , le nb_client doit etre by Operateur
-        - creer une fonction ClientModel.getNbClientByOperateur($idOperateur) 
-    - OperateurController.prefixes() 
-        - PrefixModel ajouter findByOperateur
-        - Dans le view : afficher juste les prefixes des autres controller
-    - Dans "ajouter prefixes" n'envoyer qu'une seul operateur(le notre vers la view) pour la liste deroulante
-    - ClientModel.getSituationComptesByOperateur($idOperateur)
-    - TransctionModel.estMemeOperateur(string $numEnvoyeur, string $numDestinataire) qui retourne boolean
-    -  operateurModel :
-        - ajouter trois autres fonction
-            - getSituationGainsByOperateur($idOperateur)
-            - getTotalGainsByOperateur($idOperateur)
-            - getHistoriqueGainsFiltree($idOperateur)
-
-- integration :
-    - /  qui doit vers HomeController::choice
-    - /operateur => OperateurController::index (deja fait)
-    - /client => AthController::index
-    - Dans le OperateurController creer une session d'un operateur par defaut "Telma"
-    - tout les fonction doivent appeler une version "ByOperateur"
-        - index :
-            - getTotalGainsByOperateur
-            - getNbClientsByOperateur($idOperateur)
-        - prefixes 
-            - changer le 1er findAll par findByOperateur($idOperateur)
-        - ajouterPrefixes : dans la liste deroulante , nafficher que notre operateur
-        - situationComptes
-            - getSituationComptesByOperateur($idOperateur)
-        - situationGains
-            - changer les trois fonctions par des By Operateur
-        - filtrerGains
-            - getHistoriqueGainsFiltreeByOperateur
-- design :
-    - choice.php : deux a href 
-        - vers /operateur
-        - vers /client
-
-# Version  2
-
-- Coté opérateur
-    - Configuration des préfixes valable pour les autres opérateurs (ex: 032 et 031, …)
-    - Configuration % en plus de commissions pour les transferts vers les autres opérateurs 
-    - Sur la page “Situation gain via les différents frais” , séparer opérateur et autres opérateurs
-    - Situation des montants à envoyer à chaque opérateur
-
-- Coté client
-    - Option inclure frais de retrait lors de l’envoi
-    il n’y a pas de frais de retrait pour les autres opérateurs
-    - Envoi multiple vers plusieurs numéros ( divisé le montant pour chaque numéro)
-même opérateur uniquement
