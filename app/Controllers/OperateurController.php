@@ -180,13 +180,34 @@ class OperateurController extends BaseController
 
     public function situationGains(): string
     {
+        $gainsData = $this->operateurModel->getSituationGains(); // tableau avec retrait et transfert
+
+        $retrait_total   = 0;
+        $retrait_nb      = 0;
+        $transfert_total = 0;
+        $transfert_nb    = 0;
+
+        foreach ($gainsData as $g) {
+            if ($g['type_operation'] === 'retrait') {
+                $retrait_total = (float) $g['total_frais'];
+                $retrait_nb    = (int)   $g['nb_transactions'];
+            } elseif ($g['type_operation'] === 'transfert') {
+                $transfert_total = (float) $g['total_frais'];
+                $transfert_nb    = (int)   $g['nb_transactions'];
+            }
+        }
+
         return view('operateur/gains', [
-            'gains'       => $this->operateurModel->getSituationGains(),
-            'total_gains' => $this->operateurModel->getTotalGains(),
-            'historique'  => $this->operateurModel->getHistoriqueGainsFiltree(),
+            'gains'          => $gainsData,
+            'retrait_total'  => $retrait_total,
+            'retrait_nb'     => $retrait_nb,
+            'transfert_total'=> $transfert_total,
+            'transfert_nb'   => $transfert_nb,
+            'total_gains'    => $retrait_total + $transfert_total,
+            'historique'     => $this->operateurModel->getHistoriqueGainsFiltree(),
         ]);
     }
-
+    
     public function filtrerGains(): \CodeIgniter\HTTP\ResponseInterface
     {
         $filtres = [
