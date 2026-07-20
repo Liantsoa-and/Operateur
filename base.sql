@@ -30,7 +30,7 @@ CREATE TABLE bareme(
     FOREIGN KEY (id_type_operation) REFERENCES type_operation(id)
 );
 
-CREATE TABLE transaction(
+CREATE TABLE transactions(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     numero_transaction VARCHAR(50) NOT NULL UNIQUE,
     montant DECIMAL(10,2) NOT NULL,

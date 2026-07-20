@@ -7,10 +7,10 @@ Liantsoa (B2)
 - [ok] mise en place de l'architecture ci4 (B2)
 - [ok] mise en place de l'arborescence du projet (models, controllers, views, helpers) (B2)
 - [ok] mise en place de git (B2)
-- [wip] mise en plase de la base de données initiales (B2)
+- [ok] mise en plase de la base de données initiales (B2)
     - [ok] mise en place sqlite3
     - [ok] analyse de la demande
-    - [] base dans codeigniter en tant que migration
+    - [ok] base dans codeigniter en tant que migration
     - [ok] base en sql
 
 ## 2 - Creation des fichiers initiales selon la base
