@@ -39,6 +39,16 @@ Objectif : un opérateur consulte le total des frais collectés
 ## 4 - Situation des comptes clients
 
 ## 5 - Login client automatique (si le numero n'existe pas, il est cree automatiquement) (B1)
+- [ok] vérification du préfixe
+    - [ok] PrefixeModel.estNumerovalide()
+- [ok] fonctionnalité login/création
+    - [ok] ClientModel.loginOuCreer()
+    - [ok] AuthController.login()
+- [ok] intégration
+    - [ok] routes GET/POST /login configurées
+    - [ok] session client_id et client_numero
+- [ok] design
+    - [ok] vue auth/login avec formulaire de saisie
 
 ## 6 - Voir Solde pour le client
 Objectif : Le client peut consulter son solde sur son compte 
@@ -54,8 +64,16 @@ Objectif : Le client peut consulter son solde sur son compte
     - Utiliser la variable solde envoyer depuis le Controller
 
 ## 7 - Faire un depot pour le client
-- Objectif depuis le 
-
+- Objectif : un client peux deposer
+- [ok] base
+    - transaction
+- [] fonction
+    - transactionModel.faireDepot(id,montant)
+- [] integration
+    - routes `client/depot , clientController::depot`
+    - ClientController.depot()
+- [] design
+    - Appeler cette fonciton depuis un Ajax
 ## 8 - Faire un retrait pour le client
 
 ## 9 - Faire un transfert pour le client
