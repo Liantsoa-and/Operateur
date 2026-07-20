@@ -30,3 +30,4 @@ $routes->get('/client/retrait',      'ClientController::retrait');
 $routes->post('/client/retrait',     'ClientController::retrait');
 $routes->get('/client/transfert',    'ClientController::transfert');
 $routes->post('/client/transfert',   'ClientController::transfert');
+$routes->get('/client/historique',   'ClientController::historique');
