@@ -14,8 +14,8 @@ Liantsoa (B2)
     - [ok] base en sql
 
 ## 2 - Creation des fichiers initiales selon la base
-- [] models (B2)
-- [] controllers (B2)
+- [ok] models (B2)
+- [ok] controllers (B2)
 
 ## 3 - Situation gain via les differents frais
 Objectif : chaque operateur peut voir sa caisse, total des frais payes par les clients lors de la transaction retrait et transfert, en fonction des barèmes respectifs. On peut aussi voir l'historique des transactions.
