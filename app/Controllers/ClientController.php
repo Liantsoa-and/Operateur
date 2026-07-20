@@ -156,17 +156,32 @@ class ClientController extends BaseController
     // GET /client/historique
     // Historique des opérations du client connecté
     // ----------------------------------------------------------------
-    public function historique(): string|\CodeIgniter\HTTP\RedirectResponse
-    {
-        if ($redir = $this->requireAuth()) return $redir;
 
-        $idClient     = $this->getClientId();
-        $transactions = $this->transactionsModel->getHistoriqueClient($idClient);
+public function historique(): string|\CodeIgniter\HTTP\RedirectResponse
+{
+    if ($redir = $this->requireAuth()) return $redir;
 
-        return view('client/historique', [
-            'numero'       => session()->get('client_numero'),
-            'solde'        => $this->clientModel->getSolde($idClient),
-            'transactions' => $transactions,
-        ]);
-    }
+    $idClient = $this->getClientId();
+
+    $filters = [
+        'date_min'            => $this->request->getGet('date_min'),
+        'date_max'            => $this->request->getGet('date_max'),
+        'numero_transaction'  => $this->request->getGet('numero_transaction'),
+        'type_operation'      => $this->request->getGet('type_operation'),
+        'montant_min'         => $this->request->getGet('montant_min'),
+        'montant_max'         => $this->request->getGet('montant_max'),
+        'frais_min'           => $this->request->getGet('frais_min'),
+        'frais_max'           => $this->request->getGet('frais_max'),
+        'correspondant'       => $this->request->getGet('correspondant'),
+    ];
+
+    $transactions = $this->transactionsModel->getHistoriqueClient($idClient, $filters);
+
+    return view('client/historique', [
+        'numero'       => session()->get('client_numero'),
+        'solde'        => $this->clientModel->getSolde($idClient),
+        'transactions' => $transactions,
+        'filters'      => $filters,
+    ]);
+}
 }
