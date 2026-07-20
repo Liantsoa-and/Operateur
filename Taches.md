@@ -76,6 +76,7 @@ Objectif : Le client peut consulter son solde sur son compte
     - ClientController.depot()
 - [ok] design (B1)
     - Appeler cette fonction depuis un Ajax
+    
 ## 8 - Faire un retrait pour le client
 Objectif : un client peut retirer de l'argent (frais selon barème, solde suffisant)
 - [ok] base (B1)
