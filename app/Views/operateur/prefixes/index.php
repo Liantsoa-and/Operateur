@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
         <h1 class="h3 mb-1"><i class="bi bi-hash me-2"></i>Préfixes</h1>
-        <p class="text-muted">Gérez les préfixes valides de l'opérateur</p>
+        <p class="text-muted">Gérez les préfixes valides de l'opérateur et des opérateurs tiers</p>
     </div>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAjouter">
         <i class="bi bi-plus-lg me-1"></i>Ajouter un préfixe
@@ -13,17 +13,19 @@
 
 <?= $this->include('partials/flash_messages') ?>
 
-<div class="card card-modern">
-    <div class="card-header d-flex justify-content-between bg-white">
-        <h5 class="mb-0">Liste des préfixes</h5>
-        <span class="badge bg-secondary"><?= count($prefixes ?? []) ?> préfixe(s)</span>
-    </div>
-    <div class="card-body p-0">
-        <?php if (empty($prefixes)): ?>
-            <div class="text-center py-5 text-muted">
-                Aucun préfixe configuré.
-            </div>
-        <?php else: ?>
+<?php
+    // Séparation notre opérateur (id = 1) / opérateurs tiers
+    $prefixesNous   = array_filter($prefixes ?? [], fn($p) => (int) $p['id_operateur'] === 1);
+    $prefixesAutres = array_filter($prefixes ?? [], fn($p) => (int) $p['id_operateur'] !== 1);
+?>
+
+<?php
+    // Petite fonction locale d'affichage de tableau pour éviter la duplication
+    function render_prefixe_table(array $liste, string $badgeClass): void {
+?>
+    <?php if (empty($liste)): ?>
+        <div class="text-center py-5 text-muted">Aucun préfixe configuré.</div>
+    <?php else: ?>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -34,13 +36,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($prefixes as $p): ?>
+                    <?php foreach ($liste as $p): ?>
                     <tr>
-                        <td><span class="badge bg-primary fs-6"><?= esc($p['debut_numero']) ?></span></td>
+                        <td><span class="badge <?= $badgeClass ?> fs-6"><?= esc($p['debut_numero']) ?></span></td>
                         <td><?= esc($p['nom_operateur'] ?? '—') ?></td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-outline-primary me-1 btn-edit"
-                                    data-bs-toggle="modal" 
+                                    data-bs-toggle="modal"
                                     data-bs-target="#modalModifier"
                                     data-id="<?= $p['id'] ?>"
                                     data-debut="<?= esc($p['debut_numero']) ?>"
@@ -60,7 +62,28 @@
                 </tbody>
             </table>
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
+<?php
+    }
+?>
+
+<div class="card card-modern mb-4">
+    <div class="card-header d-flex justify-content-between bg-white">
+        <h5 class="mb-0"><i class="bi bi-star-fill text-primary me-1"></i>Nos préfixes</h5>
+        <span class="badge bg-primary"><?= count($prefixesNous) ?> préfixe(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <?php render_prefixe_table($prefixesNous, 'bg-primary'); ?>
+    </div>
+</div>
+
+<div class="card card-modern">
+    <div class="card-header d-flex justify-content-between bg-white">
+        <h5 class="mb-0"><i class="bi bi-diagram-3 text-secondary me-1"></i>Préfixes des autres opérateurs</h5>
+        <span class="badge bg-secondary"><?= count($prefixesAutres) ?> préfixe(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <?php render_prefixe_table($prefixesAutres, 'bg-secondary'); ?>
     </div>
 </div>
 
@@ -84,7 +107,9 @@
                         <select name="id_operateur" class="form-select" required>
                             <option value="">-- Choisir --</option>
                             <?php foreach ($operateurs as $op): ?>
-                                <option value="<?= $op['id'] ?>"><?= esc($op['nom']) ?></option>
+                                <option value="<?= $op['id'] ?>">
+                                    <?= esc($op['nom']) ?><?= (int) $op['id'] === 1 ? ' (nous)' : '' ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -117,7 +142,9 @@
                         <label class="form-label">Opérateur</label>
                         <select id="editOperateur" name="id_operateur" class="form-select" required>
                             <?php foreach ($operateurs as $op): ?>
-                                <option value="<?= $op['id'] ?>"><?= esc($op['nom']) ?></option>
+                                <option value="<?= $op['id'] ?>">
+                                    <?= esc($op['nom']) ?><?= (int) $op['id'] === 1 ? ' (nous)' : '' ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
