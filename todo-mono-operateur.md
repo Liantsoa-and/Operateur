@@ -11,16 +11,16 @@ Liantsoa (B2)
 
 ## 1 - Page de choix à la racine
 Objectif : séparer clairement l'entrée opérateur de l'entrée client.
-- [ ] fonction (B1)
-    - [ ] HomeController.choice() → retourne la vue `choice.php`
-- [ ] intégration (B1)
-    - [ ] route `/` → `HomeController::choice`
-    - [ ] route `/operateur` → `OperateurController::index` (déjà fait)
-    - [ ] route `/client` → `AuthController::index`
-- [ ] design (B1)
-    - [ ] `choice.php` : deux cartes avec chacune un `<a href="">`
-        - [ ] carte 1 → `/operateur`
-        - [ ] carte 2 → `/client`
+- [ok] fonction (B1)
+    - [ok] HomeController.choice() → retourne la vue `choice.php`
+- [ok] intégration (B1)
+    - [ok] route `/` → `HomeController::choice`
+    - [ok] route `/operateur` → `OperateurController::index` (déjà fait)
+    - [ok] route `/client` → `AuthController::index`
+- [ok] design (B1)
+    - [ok] `choice.php` : deux cartes avec chacune un `<a href="">`
+        - [ok] carte 1 → `/operateur`
+        - [ok] carte 2 → `/client`
 
 ## 2 - Définir "notre opérateur"
 Objectif : fixer une bonne fois pour toutes quel opérateur est simulé par le système.

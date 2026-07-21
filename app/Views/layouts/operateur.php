@@ -76,6 +76,11 @@
             <i class="bi bi-graph-up-arrow"></i> Gains
         </a>
     </nav>
+       <div class="position-absolute bottom-0 w-100 p-3">
+        <a href="<?= site_url('/') ?>" class="nav-link text-danger">
+            <i class="bi bi-box-arrow-right me-2"></i> Retour à l'accueil
+        </a>
+    </div>
 </aside>
 
 <!-- Contenu principal -->

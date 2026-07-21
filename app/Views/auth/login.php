@@ -1,4 +1,4 @@
-<?= $this->extend('layouts/client_login') ?>   <!-- Layout spécial sans sidebar -->
+<?= $this->extend('layouts/client_login') ?> <!-- Layout spécial sans sidebar -->
 
 <?= $this->section('content') ?>
 <div class="container">
@@ -6,6 +6,9 @@
         <div class="col-lg-5 col-md-8">
             <div class="card shadow-sm mt-5">
                 <div class="card-body p-5">
+                    <a href="<?= site_url('/') ?>" class="btn btn-link text-muted mb-3">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
                     <div class="text-center mb-4">
                         <h2 class="fw-bold"><i class="bi bi-phone-fill text-primary"></i> Mobile Money</h2>
                         <p class="text-muted">Connexion Client</p>
@@ -20,11 +23,11 @@
 
                     <form action="<?= site_url('login') ?>" method="post">
                         <?= csrf_field() ?>
-                        
+
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Numéro de téléphone</label>
-                            <input type="text" name="numero" class="form-control form-control-lg" 
-                                   placeholder="034 XX XXX XX" required autofocus>
+                            <input type="text" name="numero" class="form-control form-control-lg"
+                                placeholder="034 XX XXX XX" required autofocus>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-lg w-100">

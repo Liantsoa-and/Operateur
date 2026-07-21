@@ -1,7 +1,7 @@
 <?php
 
 // Auth
-$routes->get('/',       'AuthController::index');
+$routes->get('/',       'HomeController::choice');
 $routes->get('login',   'AuthController::index');
 $routes->post('login',  'AuthController::login');
 $routes->get('logout',  'AuthController::logout');
@@ -24,6 +24,7 @@ $routes->get('operateur/gains',                    'OperateurController::situati
 $routes->post('operateur/gains/filtrer',           'OperateurController::filtrerGains');
 
 // Client
+$routes->get('/client',            'AuthController::index');
 $routes->get('/client/solde',        'ClientController::solde');
 $routes->get('/client/depot',        'ClientController::depot');
 $routes->post('/client/depot',       'ClientController::depot');
