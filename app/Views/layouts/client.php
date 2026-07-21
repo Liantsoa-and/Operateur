@@ -55,6 +55,9 @@
         <a href="<?= site_url('client/historique') ?>" class="nav-link <?= url_is('client/historique') ? 'active' : '' ?>">
             <i class="bi bi-clock-history me-2"></i> Historique
         </a>
+         <a href="<?= site_url('client/epargne') ?>" class="nav-link <?= url_is('client/historique') ? 'active' : '' ?>">
+            <i class="bi bi-clock-history me-2"></i> Epargne
+        </a>
         <a href="<?= site_url('client/retrait') ?>" class="nav-link <?= url_is('client/retrait') ? 'active' : '' ?>">
             <i class="bi bi-cash-stack me-2"></i> Retrait
         </a>

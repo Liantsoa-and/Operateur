@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use App\Models\ConfigEpargneModel;
 
 class TransactionsModel extends Model
 {
     protected $table = 'transactions';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
+
+        protected ConfigEpargneModel $configEpargneModel;
+
 
     protected $allowedFields = [
         'numero_transaction',
@@ -76,6 +80,8 @@ class TransactionsModel extends Model
         $frais = (float) $tranche['frais'];
         $totalDebit = $montant + $frais;
 
+ 
+
         if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
             $solde = $clientModel->getSolde($idClient);
             return [
@@ -111,6 +117,7 @@ class TransactionsModel extends Model
         $baremeModel = new BaremeModel();
         $configModel = new ConfigOperateurModel();
         $configPromoModel = new ConfigPromotionModel();
+        $configEpargneModel = new ConfigEpargneModel();
 
         if (!$prefixeModel->estNumerovalide($numeroDestinataire)) {
             return ['success' => false, 'error' => "Le numéro destinataire n'est pas valide."];
@@ -176,6 +183,7 @@ class TransactionsModel extends Model
             $totalDebit = $montant + $fraisTotal;
         }
 
+
         if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
             $solde = $clientModel->getSolde($idClient);
             return [
@@ -183,6 +191,10 @@ class TransactionsModel extends Model
                 'error' => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
             ];
         }
+
+        $montant_epargne = ($montant * $configEpargneModel->getPourcentageActuelle((int) $destinataire['id']))/100;
+        log_message("debug","montant{$montant} devient {$montant_epargne}");
+        $montant = $montant - $montant_epargne;
 
         $data = [
             'numero_transaction' => $this->_genererNumero(),

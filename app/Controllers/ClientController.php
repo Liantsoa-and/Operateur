@@ -7,15 +7,19 @@ use App\Models\ClientModel;
 use App\Models\TransactionsModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\HTTP\RedirectResponse;
+use App\Models\ConfigEpargneModel;
 
 class ClientController extends BaseController
 {
     protected ClientModel      $clientModel;
     protected TransactionsModel $transactionsModel;
 
+    protected ConfigEpargneModel $configEpargneModel;
+
     public function __construct(){
         $this->clientModel       = new ClientModel();
         $this->transactionsModel = new TransactionsModel();
+        $this->configEpargneModel = new ConfigEpargneModel();
     }
 
     // Garde de session 

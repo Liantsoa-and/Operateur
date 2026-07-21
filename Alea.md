@@ -16,3 +16,10 @@ CREATE TABLE IF NOT EXISTS config_promotion (
 );
 
 INSERT INTO config_promotion (pourcentage, date_modification) VALUES (10.00, datetime('now'));
+
+- Epargne 
+- ilay client nenah ny epargne 50 % 
+- 50 % tout l'argent transferer sur moi 
+- creer une table epargne par client 
+- modifier l'interface client 
+- lors de la transaction modifier seulemne 'monatant

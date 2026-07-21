@@ -62,6 +62,30 @@ CREATE TABLE IF NOT EXISTS config_operateur (
     date_modification  DATETIME     NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS config_promotion (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    pourcentage        DECIMAL(5,2) NOT NULL,
+    date_modification  DATETIME     NOT NULL
+);
+
+INSERT INTO config_promotion (pourcentage, date_modification) VALUES (10.00, datetime('now'));
+
+CREATE TABLE IF NOT EXISTS config_epargne(
+    id  INTEGER PRIMARY KEY AUTOINCREMENT,
+    taux_epargne DECIMAL(5,2),
+    date_modification DATETIME ,
+    id_client INTEGER,
+    FOREIGN KEY (id_client) REFERENCES client(id)
+);
+
+CREATE TABLE IF NOT EXISTS epargne(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_client INTEGER, 
+    valeur DECIMAL(5,2),
+    FOREIGN KEY (id_client) REFERENCES client(id)  
+)
+
+
 -- ============================================================
 -- VUE v_solde
 -- ============================================================
