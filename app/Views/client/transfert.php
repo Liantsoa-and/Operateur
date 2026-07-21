@@ -58,23 +58,22 @@
     </div>
 </div>
 
-<!-- <script>
+<script>
 (function () {
     const destinataireInput = document.getElementById('destinataire');
     const montantInput      = document.getElementById('montant');
     const inclureFraisInput = document.getElementById('inclure_frais');
-    const inclureFraisWrap  = document.getElementById('inclureFraisWrapper');
-    const alerteDiv          = document.getElementById('alerteCommission');
-    const tauxTexte          = document.getElementById('tauxCommissionTexte');
-    const montantTexte       = document.getElementById('montantCommissionTexte');
-    const recapDiv           = document.getElementById('recap');
-    const labelMontant       = document.getElementById('labelMontant');
-    const hintMontant        = document.getElementById('hintMontant');
-    const recapFrais         = document.getElementById('recapFrais');
-    const recapFraisRetrait  = document.getElementById('recapFraisRetrait');
-    const recapCommission    = document.getElementById('recapCommission');
-    const recapDebit         = document.getElementById('recapDebit');
-    const recapNet           = document.getElementById('recapNet');
+    const alerteDiv         = document.getElementById('alerteCommission');
+    const tauxTexte         = document.getElementById('tauxCommissionTexte');
+    const montantTexte      = document.getElementById('montantCommissionTexte');
+    const recapDiv          = document.getElementById('recap');
+    const labelMontant      = document.getElementById('labelMontant');
+    const hintMontant       = document.getElementById('hintMontant');
+    const recapFrais        = document.getElementById('recapFrais');
+    const recapFraisRetrait = document.getElementById('recapFraisRetrait');
+    const recapCommission   = document.getElementById('recapCommission');
+    const recapDebit        = document.getElementById('recapDebit');
+    const recapNet          = document.getElementById('recapNet');
 
     let timer = null;
 
@@ -82,15 +81,23 @@
         return Number(n).toLocaleString('fr-FR');
     }
 
+    function majLabelMontant() {
+        if (inclureFraisInput.checked) {
+            labelMontant.textContent = 'Montant à envoyer (Ar) — frais de retrait inclus';
+            hintMontant.textContent  = 'Le destinataire recevra ce montant + ses frais de retrait.';
+        } else {
+            labelMontant.textContent = 'Montant à envoyer (Ar)';
+            hintMontant.textContent  = 'Le destinataire recevra ce montant.';
+        }
+    }
+
     function verifier() {
         const destinataire = destinataireInput.value.trim();
-        const montant       = montantInput.value;
+        const montant      = montantInput.value;
 
         if (!destinataire || !montant) {
             alerteDiv.classList.add('d-none');
             recapDiv.classList.add('d-none');
-            inclureFraisWrap.classList.remove('d-none');
-            inclureFraisInput.disabled = false;
             return;
         }
 
@@ -109,40 +116,29 @@
                     return;
                 }
 
+                // Alerte commission inter-opérateur
                 if (data.inter_operateur && data.commission > 0) {
                     tauxTexte.textContent    = data.taux_commission;
                     montantTexte.textContent = fmt(data.commission);
                     alerteDiv.classList.remove('d-none');
-                    inclureFraisWrap.classList.add('d-none');
-                    inclureFraisInput.checked  = false;
-                    inclureFraisInput.disabled = true;
                 } else {
                     alerteDiv.classList.add('d-none');
-                    inclureFraisWrap.classList.remove('d-none');
-                    inclureFraisInput.disabled = false;
                 }
 
                 const fraisRetrait = data.frais_retrait_dest ?? 0;
                 const commission   = data.commission ?? 0;
 
-                recapFrais.textContent        = fmt(data.frais) + ' Ar';
-                recapFraisRetrait.textContent  = inclureFraisInput.checked ? fmt(fraisRetrait) + ' Ar' : '—';
-                recapCommission.textContent    = commission > 0 ? fmt(commission) + ' Ar' : '—';
-                recapDebit.textContent         = fmt(data.total_debit) + ' Ar';
-                recapNet.textContent           = fmt(data.montant_net) + ' Ar';
+                recapFrais.textContent       = fmt(data.frais) + ' Ar';
+                recapFraisRetrait.textContent = inclureFraisInput.checked ? fmt(fraisRetrait) + ' Ar' : '—';
+                recapCommission.textContent   = commission > 0 ? fmt(commission) + ' Ar' : '—';
+                recapDebit.textContent        = fmt(data.total_debit) + ' Ar';
+                recapNet.textContent          = fmt(data.montant_net) + ' Ar';
                 recapDiv.classList.remove('d-none');
             })
-            .catch(() => { alerteDiv.classList.add('d-none'); recapDiv.classList.add('d-none'); });
-    }
-
-    function majLabelMontant() {
-        if (inclureFraisInput.checked) {
-            labelMontant.textContent = 'Montant à envoyer (Ar) — frais de retrait inclus';
-            hintMontant.textContent  = 'Le destinataire recevra ce montant + ses frais de retrait.';
-        } else {
-            labelMontant.textContent = 'Montant à envoyer (Ar)';
-            hintMontant.textContent  = 'Le destinataire recevra ce montant.';
-        }
+            .catch(() => {
+                alerteDiv.classList.add('d-none');
+                recapDiv.classList.add('d-none');
+            });
     }
 
     function debounce() {
@@ -154,5 +150,5 @@
     montantInput.addEventListener('input', debounce);
     inclureFraisInput.addEventListener('change', () => { majLabelMontant(); debounce(); });
 })();
-</script> -->
+</script>
 <?= $this->endSection() ?>
