@@ -192,7 +192,7 @@ class TransactionsModel extends Model
             ];
         }
 
-        $montant_epargne = ($montant * $configEpargneModel->getPourcentageActuelle($idClient))/100;
+        $montant_epargne = ($montant * $configEpargneModel->getPourcentageActuelle((int) $destinataire['id']))/100;
         log_message("debug","montant{$montant} devient {$montant_epargne}");
         $montant = $montant - $montant_epargne;
 
