@@ -11,8 +11,8 @@ Liantsoa (B2)
 
 ## 1 - Page de choix à la racine
 Objectif : séparer clairement l'entrée opérateur de l'entrée client.
-- [ ] fonction (B1)
-    - [ ] HomeController.choice() → retourne la vue `choice.php`
+- [ok] fonction (B1)
+    - [ok] HomeController.choice() → retourne la vue `choice.php`
 - [ ] intégration (B1)
     - [ ] route `/` → `HomeController::choice`
     - [ ] route `/operateur` → `OperateurController::index` (déjà fait)
