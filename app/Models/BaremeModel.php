@@ -26,7 +26,6 @@ class BaremeModel extends Model
     ];
 
     // Retourne le barème applicable pour un montant et un type d'opération
-    // Règle : une seule tranche applicable, les tranches ne se chevauchent pas
     public function getTranche(int $idTypeOperation, float $montant): array|null
     {
         return $this->where('id_type_operation', $idTypeOperation)
@@ -36,7 +35,6 @@ class BaremeModel extends Model
     }
 
     // Calcule les frais pour un montant et un type d'opération
-    // Retourne null si aucune tranche trouvée (montant hors barème)
     public function calculerFrais(int $idTypeOperation, float $montant): float|null
     {
         $tranche = $this->getTranche($idTypeOperation, $montant);
@@ -46,7 +44,6 @@ class BaremeModel extends Model
     }
 
     // Vérifie qu'une nouvelle tranche ne chevauche pas les tranches existantes
-    // Retourne true si pas de chevauchement (insertion autorisée)
     public function estSansChevauchemnt(int $idTypeOperation, float $min, float $max, int|null $excludeId = null): bool
     {
         $builder = $this->where('id_type_operation', $idTypeOperation)
@@ -66,5 +63,12 @@ class BaremeModel extends Model
         return $this->where('id_type_operation', $idTypeOperation)
                     ->orderBy('min', 'ASC')
                     ->findAll();
+    }
+
+    // Avoir les tranches de dépôt pour un montant donné
+    public function getTrancheDepot(float $montant): array|null
+    {
+        $idTypeDepot = (new TypeOperationModel())->getIdByType(TypeOperationModel::DEPOT);
+        return $this->getTranche($idTypeDepot, $montant);
     }
 }

@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class TransactionsModel extends Model
 {
-    protected $table      = 'transactions';
+    protected $table = 'transactions';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
 
@@ -24,72 +24,74 @@ class TransactionsModel extends Model
     public function faireDepot(int $idClient, float $montant): array
     {
         if ($montant <= 0) {
-            return ['success' => false, 'error' => 'Le montant doit être strictement positif.'];
+            return ['success' => false, 'error' => 'Le montant doit être positif.'];
         }
 
         $typeOpModel = new TypeOperationModel();
         $baremeModel = new BaremeModel();
 
         $idTypeDepot = $typeOpModel->getIdByType(TypeOperationModel::DEPOT);
-        $tranche     = $baremeModel->getTranche($idTypeDepot, $montant);
+        $tranche = $baremeModel->getTranche($idTypeDepot, $montant);
 
-        // Pour le dépôt : frais = 0 même si une tranche existe
-        $idBareme = $tranche ? (int) $tranche['id'] : $this->_getBaremeParDefaut($idTypeDepot);
-
-        if (!$idBareme) {
-            return ['success' => false, 'error' => 'Aucun barème configuré pour le dépôt.'];
-        }
+        $frais = $tranche ? (float) $tranche['frais'] : 0.0;
 
         $data = [
             'numero_transaction' => $this->_genererNumero(),
-            'montant'            => $montant,
-            'frais'              => 0,
-            'date_transaction'   => date('Y-m-d H:i:s'),
-            'id_client'          => $idClient,
-            'id_destinataire'    => null,
-            'id_bareme'          => $idBareme,
+            'montant' => $montant,
+            'frais' => $frais,
+            'date_transaction' => date('Y-m-d H:i:s'),
+            'id_client' => $idClient,
+            'id_destinataire' => null,
+            'id_bareme' => $tranche ? (int) $tranche['id'] : null,
         ];
 
         $this->insert($data);
 
-        return ['success' => true, 'transaction' => $data];
+        return [
+            'success' => true,
+            'frais' => $frais,
+            'message' => $frais > 0
+                ? "Dépôt de {$montant} Ar effectué (frais : {$frais} Ar)."
+                : "Dépôt de {$montant} Ar effectué avec succès."
+        ];
     }
 
-    public function faireRetrait(int $idClient, float $montant): array{
+    public function faireRetrait(int $idClient, float $montant): array
+    {
         if ($montant <= 0) {
             return ['success' => false, 'error' => 'Le montant doit être strictement positif.'];
         }
 
-        $typeOpModel  = new TypeOperationModel();
-        $baremeModel  = new BaremeModel();
-        $clientModel  = new ClientModel();
+        $typeOpModel = new TypeOperationModel();
+        $baremeModel = new BaremeModel();
+        $clientModel = new ClientModel();
 
         $idTypeRetrait = $typeOpModel->getIdByType(TypeOperationModel::RETRAIT);
-        $tranche       = $baremeModel->getTranche($idTypeRetrait, $montant);
+        $tranche = $baremeModel->getTranche($idTypeRetrait, $montant);
 
         if (!$tranche) {
             return ['success' => false, 'error' => 'Montant hors barème : aucune tranche de frais applicable.'];
         }
 
-        $frais       = (float) $tranche['frais'];
-        $totalDebit  = $montant + $frais;
+        $frais = (float) $tranche['frais'];
+        $totalDebit = $montant + $frais;
 
         if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
             $solde = $clientModel->getSolde($idClient);
             return [
                 'success' => false,
-                'error'   => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
+                'error' => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
             ];
         }
 
         $data = [
             'numero_transaction' => $this->_genererNumero(),
-            'montant'            => $montant,
-            'frais'              => $frais,
-            'date_transaction'   => date('Y-m-d H:i:s'),
-            'id_client'          => $idClient,
-            'id_destinataire'    => null,
-            'id_bareme'          => (int) $tranche['id'],
+            'montant' => $montant,
+            'frais' => $frais,
+            'date_transaction' => date('Y-m-d H:i:s'),
+            'id_client' => $idClient,
+            'id_destinataire' => null,
+            'id_bareme' => (int) $tranche['id'],
         ];
 
         $this->insert($data);
@@ -97,103 +99,103 @@ class TransactionsModel extends Model
         return ['success' => true, 'transaction' => $data, 'frais' => $frais, 'total_debite' => $totalDebit];
     }
 
-public function faireTransfert(int $idClient, string $numeroDestinataire, float $montant, bool $inclureFrais = false): array
-{
-    if ($montant <= 0) {
-        return ['success' => false, 'error' => 'Le montant doit être strictement positif.'];
-    }
-
-    $clientModel  = new ClientModel();
-    $prefixeModel = new PrefixeModel();
-    $typeOpModel  = new TypeOperationModel();
-    $baremeModel  = new BaremeModel();
-    $configModel  = new ConfigOperateurModel();
-
-    if (!$prefixeModel->estNumerovalide($numeroDestinataire)) {
-        return ['success' => false, 'error' => "Le numéro destinataire n'est pas valide."];
-    }
-
-    $destinataire = $clientModel->findByNumero($numeroDestinataire);
-    if (!$destinataire) {
-        return ['success' => false, 'error' => "Aucun compte trouvé pour le numéro {$numeroDestinataire}."];
-    }
-
-    if ($destinataire['id'] === $idClient) {
-        return ['success' => false, 'error' => 'Vous ne pouvez pas vous transférer à vous-même.'];
-    }
-
-    $expediteur = $clientModel->find($idClient);
-    if (!$expediteur) {
-        return ['success' => false, 'error' => 'Client expéditeur introuvable.'];
-    }
-
-    $idTypeTransfert = $typeOpModel->getIdByType(TypeOperationModel::TRANSFERT);
-    $tranche         = $baremeModel->getTranche($idTypeTransfert, $montant);
-
-    if (!$tranche) {
-        return ['success' => false, 'error' => 'Montant hors barème : aucune tranche de frais applicable.'];
-    }
-
-    $frais = (float) $tranche['frais'];
-
-    // --- Détection inter-opérateur + commission ---
-    $interOperateur      = $prefixeModel->estInterOperateur($expediteur['numero'], $numeroDestinataire);
-    $commissionAppliquee = 0.0;
-
-    if ($interOperateur) {
-        $tauxCommission      = $configModel->getCommissionActuelle();
-        $commissionAppliquee = round($montant * $tauxCommission / 100, 2);
-    }
-
-    $fraisTotal = $frais + $commissionAppliquee;
-
-    // --- Calcul selon inclure_frais ---
-    if ($inclureFrais) {
-        // Le montant saisi est débité tel quel ; les frais sont prélevés dessus
-        $montantNet = $montant - $fraisTotal;
-
-        if ($montantNet <= 0) {
-            return ['success' => false, 'error' => "Le montant est insuffisant pour couvrir les frais ({$fraisTotal} Ar)."];
+    public function faireTransfert(int $idClient, string $numeroDestinataire, float $montant, bool $inclureFrais = false): array
+    {
+        if ($montant <= 0) {
+            return ['success' => false, 'error' => 'Le montant doit être strictement positif.'];
         }
 
-        $totalDebit = $montant;
-    } else {
-        // Comportement actuel : le destinataire reçoit le montant plein, frais en plus
-        $montantNet = $montant;
-        $totalDebit = $montant + $fraisTotal;
-    }
+        $clientModel = new ClientModel();
+        $prefixeModel = new PrefixeModel();
+        $typeOpModel = new TypeOperationModel();
+        $baremeModel = new BaremeModel();
+        $configModel = new ConfigOperateurModel();
 
-    if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
-        $solde = $clientModel->getSolde($idClient);
+        if (!$prefixeModel->estNumerovalide($numeroDestinataire)) {
+            return ['success' => false, 'error' => "Le numéro destinataire n'est pas valide."];
+        }
+
+        $destinataire = $clientModel->findByNumero($numeroDestinataire);
+        if (!$destinataire) {
+            return ['success' => false, 'error' => "Aucun compte trouvé pour le numéro {$numeroDestinataire}."];
+        }
+
+        if ($destinataire['id'] === $idClient) {
+            return ['success' => false, 'error' => 'Vous ne pouvez pas vous transférer à vous-même.'];
+        }
+
+        $expediteur = $clientModel->find($idClient);
+        if (!$expediteur) {
+            return ['success' => false, 'error' => 'Client expéditeur introuvable.'];
+        }
+
+        $idTypeTransfert = $typeOpModel->getIdByType(TypeOperationModel::TRANSFERT);
+        $tranche = $baremeModel->getTranche($idTypeTransfert, $montant);
+
+        if (!$tranche) {
+            return ['success' => false, 'error' => 'Montant hors barème : aucune tranche de frais applicable.'];
+        }
+
+        $frais = (float) $tranche['frais'];
+
+        // --- Détection inter-opérateur + commission ---
+        $interOperateur = $prefixeModel->estInterOperateur($expediteur['numero'], $numeroDestinataire);
+        $commissionAppliquee = 0.0;
+
+        if ($interOperateur) {
+            $tauxCommission = $configModel->getCommissionActuelle();
+            $commissionAppliquee = round($montant * $tauxCommission / 100, 2);
+        }
+
+        $fraisTotal = $frais + $commissionAppliquee;
+
+        // --- Calcul selon inclure_frais ---
+        if ($inclureFrais) {
+            // Le montant saisi est débité tel quel ; les frais sont prélevés dessus
+            $montantNet = $montant - $fraisTotal;
+
+            if ($montantNet <= 0) {
+                return ['success' => false, 'error' => "Le montant est insuffisant pour couvrir les frais ({$fraisTotal} Ar)."];
+            }
+
+            $totalDebit = $montant;
+        } else {
+            // Comportement actuel : le destinataire reçoit le montant plein, frais en plus
+            $montantNet = $montant;
+            $totalDebit = $montant + $fraisTotal;
+        }
+
+        if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
+            $solde = $clientModel->getSolde($idClient);
+            return [
+                'success' => false,
+                'error' => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
+            ];
+        }
+
+        $data = [
+            'numero_transaction' => $this->_genererNumero(),
+            'montant' => $montantNet, // ce que reçoit réellement le destinataire
+            'frais' => $frais,
+            'commission_appliquee' => $interOperateur ? $commissionAppliquee : null,
+            'date_transaction' => date('Y-m-d H:i:s'),
+            'id_client' => $idClient,
+            'id_destinataire' => (int) $destinataire['id'],
+            'id_bareme' => (int) $tranche['id'],
+        ];
+
+        $this->insert($data);
+
         return [
-            'success' => false,
-            'error'   => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
+            'success' => true,
+            'transaction' => $data,
+            'frais' => $frais,
+            'commission_appliquee' => $commissionAppliquee,
+            'montant_net_recu' => $montantNet,
+            'total_debite' => $totalDebit,
+            'destinataire' => $numeroDestinataire,
         ];
     }
-
-    $data = [
-        'numero_transaction'   => $this->_genererNumero(),
-        'montant'              => $montantNet, // ce que reçoit réellement le destinataire
-        'frais'                => $frais,
-        'commission_appliquee' => $interOperateur ? $commissionAppliquee : null,
-        'date_transaction'     => date('Y-m-d H:i:s'),
-        'id_client'            => $idClient,
-        'id_destinataire'      => (int) $destinataire['id'],
-        'id_bareme'            => (int) $tranche['id'],
-    ];
-
-    $this->insert($data);
-
-    return [
-        'success'              => true,
-        'transaction'          => $data,
-        'frais'                => $frais,
-        'commission_appliquee' => $commissionAppliquee,
-        'montant_net_recu'     => $montantNet,
-        'total_debite'         => $totalDebit,
-        'destinataire'         => $numeroDestinataire,
-    ];
-}
     public function getHistoriqueClient(int $idClient, array $filters = []): array
     {
         $sql = "
@@ -281,7 +283,8 @@ public function faireTransfert(int $idClient, string $numeroDestinataire, float 
         return $this->db->query($sql, $params)->getResultArray();
     }
 
-    public function getHistoriqueOperateur(int $idOperateur){
+    public function getHistoriqueOperateur(int $idOperateur)
+    {
         return $this->db->query("
             SELECT
                 t.id,
@@ -312,24 +315,24 @@ public function faireTransfert(int $idClient, string $numeroDestinataire, float 
         ", ['id' => $idOperateur])->getResultArray();
     }
 
-public function getGains(int $idOperateurPropre): array
-{
-    // Gains intra : frais hors transferts inter-opérateurs (dépôt, retrait, transfert même opérateur)
-    $intra = $this->db->query("
+    public function getGains(int $idOperateurPropre): array
+    {
+        // Gains intra : frais hors transferts inter-opérateurs (dépôt, retrait, transfert même opérateur)
+        $intra = $this->db->query("
         SELECT COALESCE(SUM(t.frais), 0) AS total_frais, COUNT(*) AS nb
         FROM transactions t
         WHERE t.commission_appliquee IS NULL
     ")->getRowArray();
 
-    // Gains inter : commissions sur transferts vers autres opérateurs
-    $inter = $this->db->query("
+        // Gains inter : commissions sur transferts vers autres opérateurs
+        $inter = $this->db->query("
         SELECT COALESCE(SUM(t.commission_appliquee), 0) AS total_commission, COUNT(*) AS nb
         FROM transactions t
         WHERE t.commission_appliquee IS NOT NULL
     ")->getRowArray();
 
-    // Montants à reverser par opérateur externe (principal transféré, hors frais/commission)
-    $reversements = $this->db->query("
+        // Montants à reverser par opérateur externe (principal transféré, hors frais/commission)
+        $reversements = $this->db->query("
         SELECT
             o.id  AS id_operateur,
             o.nom AS nom_operateur,
@@ -345,129 +348,131 @@ public function getGains(int $idOperateurPropre): array
         ORDER BY montant_a_reverser DESC
     ", ['idOperateurPropre' => $idOperateurPropre])->getResultArray();
 
-    return [
-        'intra' => [
-            'total_frais' => (float) ($intra['total_frais'] ?? 0),
-            'nb'          => (int)   ($intra['nb'] ?? 0),
-        ],
-        'inter' => [
-            'total_commission' => (float) ($inter['total_commission'] ?? 0),
-            'nb'               => (int)   ($inter['nb'] ?? 0),
-        ],
-        'reversements' => $reversements,
-    ];
-}
+        return [
+            'intra' => [
+                'total_frais' => (float) ($intra['total_frais'] ?? 0),
+                'nb' => (int) ($intra['nb'] ?? 0),
+            ],
+            'inter' => [
+                'total_commission' => (float) ($inter['total_commission'] ?? 0),
+                'nb' => (int) ($inter['nb'] ?? 0),
+            ],
+            'reversements' => $reversements,
+        ];
+    }
 
-    private function _genererNumero(): string{
+    private function _genererNumero(): string
+    {
         return 'TXN-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
     }
 
-    private function _getBaremeParDefaut(int $idTypeOperation): int|null{
+    private function _getBaremeParDefaut(int $idTypeOperation): int|null
+    {
         $baremeModel = new BaremeModel();
         $row = $baremeModel->where('id_type_operation', $idTypeOperation)->first();
         return $row ? (int) $row['id'] : null;
     }
-public function faireTransfertMultiple(int $idClient, array $numeros, float $montant): array
-{
-    $numeros = array_values(array_unique(array_map('trim', $numeros)));
+    public function faireTransfertMultiple(int $idClient, array $numeros, float $montant): array
+    {
+        $numeros = array_values(array_unique(array_map('trim', $numeros)));
 
-    if (count($numeros) < 2) {
-        return ['success' => false, 'error' => 'Il faut au moins 2 destinataires pour un envoi multiple.'];
-    }
-
-    if ($montant <= 0) {
-        return ['success' => false, 'error' => 'Le montant total doit être strictement positif.'];
-    }
-
-    $clientModel  = new ClientModel();
-    $prefixeModel = new PrefixeModel();
-    $typeOpModel  = new TypeOperationModel();
-    $baremeModel  = new BaremeModel();
-
-    $expediteur = $clientModel->find($idClient);
-    if (!$expediteur) {
-        return ['success' => false, 'error' => 'Client expéditeur introuvable.'];
-    }
-
-    $nbDestinataires = count($numeros);
-    $montantParDest  = round($montant / $nbDestinataires, 2);
-
-    if ($montantParDest <= 0) {
-        return ['success' => false, 'error' => 'Montant par destinataire trop faible.'];
-    }
-
-    $idTypeTransfert = $typeOpModel->getIdByType(TypeOperationModel::TRANSFERT);
-    $tranche         = $baremeModel->getTranche($idTypeTransfert, $montantParDest);
-
-    if (!$tranche) {
-        return ['success' => false, 'error' => 'Montant par destinataire hors barème.'];
-    }
-
-    $fraisParDest = (float) $tranche['frais'];
-    $destinatairesInfo = [];
-
-    foreach ($numeros as $numero) {
-        if (!$prefixeModel->estNumerovalide($numero)) {
-            return ['success' => false, 'error' => "Numéro invalide : {$numero}."];
+        if (count($numeros) < 2) {
+            return ['success' => false, 'error' => 'Il faut au moins 2 destinataires pour un envoi multiple.'];
         }
 
-        $dest = $clientModel->findByNumero($numero);
-        if (!$dest) {
-            return ['success' => false, 'error' => "Aucun compte trouvé pour {$numero}."];
+        if ($montant <= 0) {
+            return ['success' => false, 'error' => 'Le montant total doit être strictement positif.'];
         }
 
-        if ((int) $dest['id'] === $idClient) {
-            return ['success' => false, 'error' => 'Vous ne pouvez pas vous transférer à vous-même.'];
+        $clientModel = new ClientModel();
+        $prefixeModel = new PrefixeModel();
+        $typeOpModel = new TypeOperationModel();
+        $baremeModel = new BaremeModel();
+
+        $expediteur = $clientModel->find($idClient);
+        if (!$expediteur) {
+            return ['success' => false, 'error' => 'Client expéditeur introuvable.'];
         }
 
-        if ($prefixeModel->estInterOperateur($expediteur['numero'], $numero)) {
-            return ['success' => false, 'error' => "L'envoi multiple n'est autorisé que vers le même opérateur ({$numero} est inter-opérateur)."];
+        $nbDestinataires = count($numeros);
+        $montantParDest = round($montant / $nbDestinataires, 2);
+
+        if ($montantParDest <= 0) {
+            return ['success' => false, 'error' => 'Montant par destinataire trop faible.'];
         }
 
-        $destinatairesInfo[] = $dest;
-    }
+        $idTypeTransfert = $typeOpModel->getIdByType(TypeOperationModel::TRANSFERT);
+        $tranche = $baremeModel->getTranche($idTypeTransfert, $montantParDest);
 
-    $totalDebit = ($montantParDest + $fraisParDest) * $nbDestinataires;
+        if (!$tranche) {
+            return ['success' => false, 'error' => 'Montant par destinataire hors barème.'];
+        }
 
-    if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
-        $solde = $clientModel->getSolde($idClient);
+        $fraisParDest = (float) $tranche['frais'];
+        $destinatairesInfo = [];
+
+        foreach ($numeros as $numero) {
+            if (!$prefixeModel->estNumerovalide($numero)) {
+                return ['success' => false, 'error' => "Numéro invalide : {$numero}."];
+            }
+
+            $dest = $clientModel->findByNumero($numero);
+            if (!$dest) {
+                return ['success' => false, 'error' => "Aucun compte trouvé pour {$numero}."];
+            }
+
+            if ((int) $dest['id'] === $idClient) {
+                return ['success' => false, 'error' => 'Vous ne pouvez pas vous transférer à vous-même.'];
+            }
+
+            if ($prefixeModel->estInterOperateur($expediteur['numero'], $numero)) {
+                return ['success' => false, 'error' => "L'envoi multiple n'est autorisé que vers le même opérateur ({$numero} est inter-opérateur)."];
+            }
+
+            $destinatairesInfo[] = $dest;
+        }
+
+        $totalDebit = ($montantParDest + $fraisParDest) * $nbDestinataires;
+
+        if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
+            $solde = $clientModel->getSolde($idClient);
+            return [
+                'success' => false,
+                'error' => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
+            ];
+        }
+
+        $this->db->transStart();
+
+        $transactionsCreees = [];
+        foreach ($destinatairesInfo as $index => $dest) {
+            $data = [
+                'numero_transaction' => $this->_genererNumero() . '-' . ($index + 1),
+                'montant' => $montantParDest,
+                'frais' => $fraisParDest,
+                'commission_appliquee' => null,
+                'date_transaction' => date('Y-m-d H:i:s'),
+                'id_client' => $idClient,
+                'id_destinataire' => (int) $dest['id'],
+                'id_bareme' => (int) $tranche['id'],
+            ];
+            $this->insert($data);
+            $transactionsCreees[] = $data + ['destinataire' => $numeros[$index]];
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return ['success' => false, 'error' => 'Erreur lors de l\'enregistrement des transactions.'];
+        }
+
         return [
-            'success' => false,
-            'error'   => "Solde insuffisant. Solde disponible : {$solde} Ar, montant total requis : {$totalDebit} Ar.",
+            'success' => true,
+            'nb_destinataires' => $nbDestinataires,
+            'montant_par_dest' => $montantParDest,
+            'frais_par_dest' => $fraisParDest,
+            'total_debite' => $totalDebit,
+            'transactions' => $transactionsCreees,
         ];
     }
-
-    $this->db->transStart();
-
-    $transactionsCreees = [];
-    foreach ($destinatairesInfo as $index => $dest) {
-        $data = [
-            'numero_transaction'   => $this->_genererNumero() . '-' . ($index + 1),
-            'montant'              => $montantParDest,
-            'frais'                => $fraisParDest,
-            'commission_appliquee' => null,
-            'date_transaction'     => date('Y-m-d H:i:s'),
-            'id_client'            => $idClient,
-            'id_destinataire'      => (int) $dest['id'],
-            'id_bareme'            => (int) $tranche['id'],
-        ];
-        $this->insert($data);
-        $transactionsCreees[] = $data + ['destinataire' => $numeros[$index]];
-    }
-
-    $this->db->transComplete();
-
-    if ($this->db->transStatus() === false) {
-        return ['success' => false, 'error' => 'Erreur lors de l\'enregistrement des transactions.'];
-    }
-
-    return [
-        'success'            => true,
-        'nb_destinataires'   => $nbDestinataires,
-        'montant_par_dest'   => $montantParDest,
-        'frais_par_dest'     => $fraisParDest,
-        'total_debite'       => $totalDebit,
-        'transactions'       => $transactionsCreees,
-    ];
-}
 }

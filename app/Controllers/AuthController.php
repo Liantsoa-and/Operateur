@@ -6,19 +6,15 @@ use App\Controllers\BaseController;
 use App\Models\ClientModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
-class AuthController extends BaseController
-{
+class AuthController extends BaseController {
     protected ClientModel $clientModel;
 
-    public function __construct()
-    {
+    public function __construct(){
         $this->clientModel = new ClientModel();
     }
 
-    // GET /login
-    // Affiche le formulaire de saisie du numéro
-    public function index(): string|ResponseInterface
-    {
+    // affiche le formulaire de connexion
+    public function index(): string|ResponseInterface{
         if (session()->get('client_id')) {
             return redirect()->to('/client/solde');
         }
@@ -26,10 +22,9 @@ class AuthController extends BaseController
         return view('auth/login');
     }
 
-    // POST /login
     // Login automatique : crée le compte si le numéro est valide et inconnu
-    public function login(): \CodeIgniter\HTTP\RedirectResponse
-    {
+    public function login(): \CodeIgniter\HTTP\RedirectResponse{
+
         $numero = trim($this->request->getPost('numero'));
 
         if (empty($numero)) {
@@ -55,9 +50,8 @@ class AuthController extends BaseController
         return redirect()->to('/client/solde')->with('success', $message);
     }
 
-    // GET /logout
-    public function logout(): \CodeIgniter\HTTP\RedirectResponse
-    {
+    // deconnexion : détruit la session et redirige vers la page de connexion
+    public function logout(): \CodeIgniter\HTTP\RedirectResponse {
         session()->destroy();
         return redirect()->to('/login')->with('success', 'Déconnexion réussie.');
     }

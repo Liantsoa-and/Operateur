@@ -5,41 +5,36 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\ClientModel;
 use App\Models\TransactionsModel;
+use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\HTTP\RedirectResponse;
 
 class ClientController extends BaseController
 {
     protected ClientModel      $clientModel;
     protected TransactionsModel $transactionsModel;
 
-    public function __construct()
-    {
+    public function __construct(){
         $this->clientModel       = new ClientModel();
         $this->transactionsModel = new TransactionsModel();
     }
 
-    // ----------------------------------------------------------------
-    // Garde de session : redirige si non connecté
-    // ----------------------------------------------------------------
-    private function getClientId(): int|null
-    {
+    // Garde de session 
+    private function getClientId(): int|null{
         $id = session()->get('client_id');
         return $id ? (int) $id : null;
     }
 
-    private function requireAuth(): \CodeIgniter\HTTP\RedirectResponse|null
-    {
+    // Vérifie si le client est connecté, sinon redirige vers la page de connexion
+    private function requireAuth(): RedirectResponse|null{
         if (!$this->getClientId()) {
             return redirect()->to('/login')->with('error', 'Veuillez vous connecter.');
         }
         return null;
     }
 
-    // ----------------------------------------------------------------
-    // GET /client/solde
+
     // Affiche le solde du client connecté
-    // ----------------------------------------------------------------
-    public function solde(): string|\CodeIgniter\HTTP\RedirectResponse
-    {
+    public function solde(): string|RedirectResponse{
         if ($redir = $this->requireAuth()) return $redir;
 
         $idClient = $this->getClientId();
@@ -51,12 +46,9 @@ class ClientController extends BaseController
         ]);
     }
 
-    // ----------------------------------------------------------------
-    // GET  /client/depot
-    // POST /client/depot
+
     // Dépôt : pas de frais, montant > 0, validé automatiquement
-    // ----------------------------------------------------------------
-    public function depot(): string|\CodeIgniter\HTTP\RedirectResponse
+    public function depot(): string|RedirectResponse
     {
         if ($redir = $this->requireAuth()) return $redir;
 
