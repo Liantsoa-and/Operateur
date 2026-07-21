@@ -40,7 +40,6 @@ class ClientController extends BaseController
         $idClient = $this->getClientId();
         $solde    = $this->clientModel->getSolde($idClient);
         log_message("debug","Solde du client {$idClient} : {$solde} Ar");
-
         return view('client/solde', [
             'numero' => session()->get('client_numero'),
             'solde'  => $solde,
