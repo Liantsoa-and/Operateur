@@ -82,7 +82,7 @@
                 <div class="bg-success bg-opacity-10 text-success p-3 rounded-3"><i class="bi bi-people fs-3"></i></div>
                 <div>
                     <h3 class="fw-bold mb-0"><?= number_format($gains_intra['total_frais'] ?? 0, 0, ',', ' ') ?> Ar</h3>
-                    <p class="text-muted mb-0">Gains intra (même opérateur)</p>
+                    <p class="text-muted mb-0">Gains des frais pour transactions sans commission</p>
                     <small class="text-muted"><?= $gains_intra['nb'] ?? 0 ?> transaction(s)</small>
                 </div>
             </div>
@@ -94,7 +94,7 @@
                 <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3"><i class="bi bi-globe fs-3"></i></div>
                 <div>
                     <h3 class="fw-bold mb-0"><?= number_format($gains_inter['total_commission'] ?? 0, 0, ',', ' ') ?> Ar</h3>
-                    <p class="text-muted mb-0">Gains inter (commissions)</p>
+                    <p class="text-muted mb-0">Somme des commissions</p>
                     <small class="text-muted"><?= $gains_inter['nb'] ?? 0 ?> transaction(s)</small>
                 </div>
             </div>
