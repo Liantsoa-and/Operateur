@@ -35,5 +35,6 @@ $routes->post('/client/transfert',   'ClientController::transfert');
 $routes->get('/client/historique',   'ClientController::historique');
 
 $routes->post('operateur/commission', 'OperateurController::modifierCommission');
+$routes->post('operateur/promotion', 'OperateurController::modifierPromotion');
 $routes->post('client/transfert/commission', 'ClientController::verifierCommission');
 $routes->match(['get', 'post'], 'client/transfert-multiple', 'ClientController::transfertMultiple');

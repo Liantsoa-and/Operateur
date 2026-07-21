@@ -10,6 +10,7 @@ use App\Models\BaremeModel;
 use App\Models\ClientModel;
 use App\Models\ConfigOperateurModel;
 use App\Models\TransactionsModel;
+use App\Models\ConfigPromotionModel;
 
 class OperateurController extends BaseController
 {
@@ -21,6 +22,7 @@ class OperateurController extends BaseController
     protected ConfigOperateurModel $configOperateurModel;
     protected TransactionsModel $transactionsModel;
     private const NOTRE_OPERATEUR_ID = 1; // Telma
+    protected ConfigPromotionModel $promotionModel;
 
     public function __construct()
     {
@@ -31,6 +33,7 @@ class OperateurController extends BaseController
         $this->clientModel    = new ClientModel();
         $this->configOperateurModel = new ConfigOperateurModel();
         $this->transactionsModel    = new TransactionsModel(); 
+        $this->promotionModel = new ConfigPromotionModel();
     }
 
 
@@ -40,6 +43,7 @@ class OperateurController extends BaseController
             'total_gains'         => $this->operateurModel->getTotalGains(),
             'nb_clients'          => (new \App\Models\ClientModel())->countAll(),
             'commission_actuelle' => $this->configOperateurModel->getCommissionActuelle(),
+            'promotion_actuelle'  => $this->promotionModel->getPourcentageActuelle(),
         ]);
     }
 
@@ -54,6 +58,19 @@ class OperateurController extends BaseController
         $this->configOperateurModel->setCommission($taux);
 
         return redirect()->to('/operateur')->with('success', "Commission inter-opérateur mise à jour à {$taux} %.");
+    }
+
+    public function modifierPromotion(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        $taux = (float) $this->request->getPost('pourcentage');
+
+        if ($taux < 0 || $taux > 100) {
+            return redirect()->back()->with('error', 'Le taux de pourcentage doit être compris entre 0 et 100.');
+        }
+
+        $this->promotionModel->setPourcentage($taux);
+
+        return redirect()->to('/operateur')->with('success', "Commission pourcentage mise à jour à {$taux} %.");
     }
 
     public function prefixes(): string

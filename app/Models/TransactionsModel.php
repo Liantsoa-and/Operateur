@@ -110,6 +110,7 @@ class TransactionsModel extends Model
         $typeOpModel = new TypeOperationModel();
         $baremeModel = new BaremeModel();
         $configModel = new ConfigOperateurModel();
+        $configPromoModel = new ConfigPromotionModel();
 
         if (!$prefixeModel->estNumerovalide($numeroDestinataire)) {
             return ['success' => false, 'error' => "Le numéro destinataire n'est pas valide."];
@@ -141,26 +142,36 @@ class TransactionsModel extends Model
         // --- Détection inter-opérateur + commission ---
         $interOperateur = $prefixeModel->estInterOperateur($expediteur['numero'], $numeroDestinataire);
         $commissionAppliquee = 0.0;
+        $tauxPromotion = 0.0;
 
         if ($interOperateur) {
             $tauxCommission = $configModel->getCommissionActuelle();
             $commissionAppliquee = round($montant * $tauxCommission / 100, 2);
+        } else {
+            $tauxPromotion = $configPromoModel->getPourcentageActuelle();
+            $frais = $frais - round(($frais * $tauxPromotion / 100), 2);
         }
 
-        $fraisTotal = $frais + $commissionAppliquee;
+        // --- Frais retrait destinataire (si inclureFrais) ---
+        $fraisRetraitDest = 0.0;
+        if ($inclureFrais) {
+            $idTypeRetrait = $typeOpModel->getIdByType(TypeOperationModel::RETRAIT);
+            $trancheRetrait = $baremeModel->getTranche($idTypeRetrait, $montant);
+            if (!$trancheRetrait) {
+                return ['success' => false, 'error' => 'Aucune tranche retrait applicable pour ce montant.'];
+            }
+            $fraisRetraitDest = (float) $trancheRetrait['frais'];
+        }
+
+        $fraisTotal = $frais + $commissionAppliquee + $fraisRetraitDest;
 
         // --- Calcul selon inclure_frais ---
         if ($inclureFrais) {
-            // Le montant saisi est débité tel quel ; les frais sont prélevés dessus
-            $montantNet = $montant - $fraisTotal;
-
-            if ($montantNet <= 0) {
-                return ['success' => false, 'error' => "Le montant est insuffisant pour couvrir les frais ({$fraisTotal} Ar)."];
-            }
-
-            $totalDebit = $montant;
+            // Le destinataire reçoit le montant + ses frais de retrait
+            $montantNet = $montant + $fraisRetraitDest;
+            $totalDebit  = $montant + $frais + $commissionAppliquee + $fraisRetraitDest;
         } else {
-            // Comportement actuel : le destinataire reçoit le montant plein, frais en plus
+            // Le destinataire reçoit le montant plein, frais en plus pour l'expéditeur
             $montantNet = $montant;
             $totalDebit = $montant + $fraisTotal;
         }
@@ -196,6 +207,7 @@ class TransactionsModel extends Model
             'destinataire' => $numeroDestinataire,
         ];
     }
+
     public function getHistoriqueClient(int $idClient, array $filters = []): array
     {
         $sql = "
@@ -283,7 +295,8 @@ class TransactionsModel extends Model
         return $this->db->query($sql, $params)->getResultArray();
     }
 
-    public function getHistoriqueOperateur(int $idOperateur)
+    // Historique des transactions pour un operateur
+    public function getHistoriqueOperateur(int $idOperateur): array
     {
         return $this->db->query("
             SELECT
@@ -293,60 +306,79 @@ class TransactionsModel extends Model
                 to_.type AS type_operation,
                 t.montant,
                 t.frais,
+                t.commission_appliquee,
+                c_src.numero  AS numero_expediteur,
+                c_dest.numero AS numero_destinataire,
+                
+                -- Impact sur le solde global de l'opérateur (approximation)
                 CASE
-                    WHEN to_.type = 'depot'     THEN t.montant
-                    WHEN to_.type IN ('retrait', 'transfert') AND t.id_client = :id: THEN -(t.montant + t.frais)
-                    WHEN to_.type = 'transfert' AND t.id_destinataire = :id: THEN t.montant
+                    WHEN to_.type = 'depot' THEN t.montant
+                    WHEN to_.type = 'retrait' THEN -(t.montant + t.frais)
+                    WHEN to_.type = 'transfert' AND p_src.id_operateur = :idOperateur 
+                        AND p_dest.id_operateur = :idOperateur THEN 0          -- intra-opérateur
+                    WHEN to_.type = 'transfert' AND p_src.id_operateur = :idOperateur 
+                        THEN -(t.montant + t.frais + COALESCE(t.commission_appliquee, 0)) -- sortie
+                    WHEN to_.type = 'transfert' AND p_dest.id_operateur = :idOperateur 
+                        THEN t.montant                                          -- entrée (net)
                     ELSE 0
-                END AS impact_solde,
-                CASE
-                    WHEN to_.type = 'transfert' AND t.id_client = :id:          THEN dest.numero
-                    WHEN to_.type = 'transfert' AND t.id_destinataire = :id:    THEN src.numero
-                    ELSE NULL
-                END AS numero_correspondant
+                END AS impact_solde_operateur,
+
+                CASE 
+                    WHEN to_.type = 'transfert' THEN 
+                        CONCAT(c_src.numero, ' → ', COALESCE(c_dest.numero, 'Inconnu'))
+                    ELSE NULL 
+                END AS correspondants
+
             FROM transactions t
             JOIN bareme b ON t.id_bareme = b.id
             JOIN type_operation to_ ON b.id_type_operation = to_.id
-            LEFT JOIN client dest ON dest.id = t.id_destinataire
-            LEFT JOIN client src  ON src.id  = t.id_client
-            WHERE t.id_client = :id:
-               OR t.id_destinataire = :id:
+            
+            -- Jointures pour récupérer les opérateurs des numéros
+            LEFT JOIN client c_src  ON c_src.id  = t.id_client
+            LEFT JOIN prefixe p_src ON p_src.debut_numero = LEFT(c_src.numero, 3)
+            
+            LEFT JOIN client c_dest ON c_dest.id = t.id_destinataire
+            LEFT JOIN prefixe p_dest ON p_dest.debut_numero = LEFT(c_dest.numero, 3)
+            
+            WHERE (p_src.id_operateur = :idOperateur 
+                OR p_dest.id_operateur = :idOperateur)
+            
             ORDER BY t.date_transaction DESC
-        ", ['id' => $idOperateur])->getResultArray();
+        ", ['idOperateur' => $idOperateur])->getResultArray();
     }
 
     public function getGains(int $idOperateurPropre): array
     {
         // Gains intra : frais hors transferts inter-opérateurs (dépôt, retrait, transfert même opérateur)
         $intra = $this->db->query("
-        SELECT COALESCE(SUM(t.frais), 0) AS total_frais, COUNT(*) AS nb
-        FROM transactions t
-        WHERE t.commission_appliquee IS NULL
-    ")->getRowArray();
+            SELECT COALESCE(SUM(t.frais), 0) AS total_frais, COUNT(*) AS nb
+            FROM transactions t
+            WHERE t.commission_appliquee IS NULL
+        ")->getRowArray();
 
         // Gains inter : commissions sur transferts vers autres opérateurs
         $inter = $this->db->query("
-        SELECT COALESCE(SUM(t.commission_appliquee), 0) AS total_commission, COUNT(*) AS nb
-        FROM transactions t
-        WHERE t.commission_appliquee IS NOT NULL
-    ")->getRowArray();
+            SELECT COALESCE(SUM(t.commission_appliquee), 0) AS total_commission, COUNT(*) AS nb
+            FROM transactions t
+            WHERE t.commission_appliquee IS NOT NULL
+        ")->getRowArray();
 
         // Montants à reverser par opérateur externe (principal transféré, hors frais/commission)
         $reversements = $this->db->query("
-        SELECT
-            o.id  AS id_operateur,
-            o.nom AS nom_operateur,
-            COALESCE(SUM(t.montant), 0) AS montant_a_reverser,
-            COUNT(*) AS nb_transactions
-        FROM transactions t
-        JOIN client   dest ON dest.id = t.id_destinataire
-        JOIN prefixe  p    ON SUBSTR(dest.numero, 1, 3) = p.debut_numero
-        JOIN operateur o   ON o.id = p.id_operateur
-        WHERE t.commission_appliquee IS NOT NULL
-          AND o.id != :idOperateurPropre:
-        GROUP BY o.id, o.nom
-        ORDER BY montant_a_reverser DESC
-    ", ['idOperateurPropre' => $idOperateurPropre])->getResultArray();
+            SELECT
+                o.id  AS id_operateur,
+                o.nom AS nom_operateur,
+                COALESCE(SUM(t.montant), 0) AS montant_a_reverser,
+                COUNT(*) AS nb_transactions
+            FROM transactions t
+            JOIN client   dest ON dest.id = t.id_destinataire
+            JOIN prefixe  p    ON SUBSTR(dest.numero, 1, 3) = p.debut_numero
+            JOIN operateur o   ON o.id = p.id_operateur
+            WHERE t.commission_appliquee IS NOT NULL
+              AND o.id != :idOperateurPropre:
+            GROUP BY o.id, o.nom
+            ORDER BY montant_a_reverser DESC
+        ", ['idOperateurPropre' => $idOperateurPropre])->getResultArray();
 
         return [
             'intra' => [
@@ -409,6 +441,13 @@ class TransactionsModel extends Model
         }
 
         $fraisParDest = (float) $tranche['frais'];
+
+        $idTypeRetrait = $typeOpModel->getIdByType(TypeOperationModel::RETRAIT);
+        $trancheRetrait = $baremeModel->getTranche($idTypeRetrait, $montantParDest);
+        $fraisRetraitDest = $trancheRetrait ? (float) $trancheRetrait['frais'] : 0.0;
+
+        $montantNetParDest = $montantParDest + $fraisRetraitDest;
+
         $destinatairesInfo = [];
 
         foreach ($numeros as $numero) {
@@ -432,7 +471,7 @@ class TransactionsModel extends Model
             $destinatairesInfo[] = $dest;
         }
 
-        $totalDebit = ($montantParDest + $fraisParDest) * $nbDestinataires;
+        $totalDebit = ($montantParDest + $fraisParDest + $fraisRetraitDest) * $nbDestinataires;
 
         if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
             $solde = $clientModel->getSolde($idClient);
@@ -448,7 +487,7 @@ class TransactionsModel extends Model
         foreach ($destinatairesInfo as $index => $dest) {
             $data = [
                 'numero_transaction' => $this->_genererNumero() . '-' . ($index + 1),
-                'montant' => $montantParDest,
+                'montant' => $montantNetParDest,
                 'frais' => $fraisParDest,
                 'commission_appliquee' => null,
                 'date_transaction' => date('Y-m-d H:i:s'),
@@ -471,6 +510,8 @@ class TransactionsModel extends Model
             'nb_destinataires' => $nbDestinataires,
             'montant_par_dest' => $montantParDest,
             'frais_par_dest' => $fraisParDest,
+            'frais_retrait_dest' => $fraisRetraitDest,
+            'montant_net_par_dest' => $montantNetParDest,
             'total_debite' => $totalDebit,
             'transactions' => $transactionsCreees,
         ];
