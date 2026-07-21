@@ -110,6 +110,7 @@ class TransactionsModel extends Model
         $typeOpModel = new TypeOperationModel();
         $baremeModel = new BaremeModel();
         $configModel = new ConfigOperateurModel();
+        $configPromoModel = new ConfigPromotionModel();
 
         if (!$prefixeModel->estNumerovalide($numeroDestinataire)) {
             return ['success' => false, 'error' => "Le numéro destinataire n'est pas valide."];
@@ -141,26 +142,36 @@ class TransactionsModel extends Model
         // --- Détection inter-opérateur + commission ---
         $interOperateur = $prefixeModel->estInterOperateur($expediteur['numero'], $numeroDestinataire);
         $commissionAppliquee = 0.0;
+        $tauxPromotion = 0.0;
 
         if ($interOperateur) {
             $tauxCommission = $configModel->getCommissionActuelle();
             $commissionAppliquee = round($montant * $tauxCommission / 100, 2);
+        } else {
+            $tauxPromotion = $configPromoModel->getPourcentageActuelle();
+            $frais = $frais - round(($frais * $tauxPromotion / 100), 2);
         }
 
-        $fraisTotal = $frais + $commissionAppliquee;
+        // --- Frais retrait destinataire (si inclureFrais) ---
+        $fraisRetraitDest = 0.0;
+        if ($inclureFrais) {
+            $idTypeRetrait = $typeOpModel->getIdByType(TypeOperationModel::RETRAIT);
+            $trancheRetrait = $baremeModel->getTranche($idTypeRetrait, $montant);
+            if (!$trancheRetrait) {
+                return ['success' => false, 'error' => 'Aucune tranche retrait applicable pour ce montant.'];
+            }
+            $fraisRetraitDest = (float) $trancheRetrait['frais'];
+        }
+
+        $fraisTotal = $frais + $commissionAppliquee + $fraisRetraitDest;
 
         // --- Calcul selon inclure_frais ---
         if ($inclureFrais) {
-            // Le montant saisi est débité tel quel ; les frais sont prélevés dessus
-            $montantNet = $montant - $fraisTotal;
-
-            if ($montantNet <= 0) {
-                return ['success' => false, 'error' => "Le montant est insuffisant pour couvrir les frais ({$fraisTotal} Ar)."];
-            }
-
-            $totalDebit = $montant;
+            // Le destinataire reçoit le montant + ses frais de retrait
+            $montantNet = $montant + $fraisRetraitDest;
+            $totalDebit  = $montant + $frais + $commissionAppliquee + $fraisRetraitDest;
         } else {
-            // Comportement actuel : le destinataire reçoit le montant plein, frais en plus
+            // Le destinataire reçoit le montant plein, frais en plus pour l'expéditeur
             $montantNet = $montant;
             $totalDebit = $montant + $fraisTotal;
         }
@@ -430,6 +441,13 @@ class TransactionsModel extends Model
         }
 
         $fraisParDest = (float) $tranche['frais'];
+
+        $idTypeRetrait = $typeOpModel->getIdByType(TypeOperationModel::RETRAIT);
+        $trancheRetrait = $baremeModel->getTranche($idTypeRetrait, $montantParDest);
+        $fraisRetraitDest = $trancheRetrait ? (float) $trancheRetrait['frais'] : 0.0;
+
+        $montantNetParDest = $montantParDest + $fraisRetraitDest;
+
         $destinatairesInfo = [];
 
         foreach ($numeros as $numero) {
@@ -453,7 +471,7 @@ class TransactionsModel extends Model
             $destinatairesInfo[] = $dest;
         }
 
-        $totalDebit = ($montantParDest + $fraisParDest) * $nbDestinataires;
+        $totalDebit = ($montantParDest + $fraisParDest + $fraisRetraitDest) * $nbDestinataires;
 
         if (!$clientModel->aSoldeSuffisant($idClient, $totalDebit)) {
             $solde = $clientModel->getSolde($idClient);
@@ -469,7 +487,7 @@ class TransactionsModel extends Model
         foreach ($destinatairesInfo as $index => $dest) {
             $data = [
                 'numero_transaction' => $this->_genererNumero() . '-' . ($index + 1),
-                'montant' => $montantParDest,
+                'montant' => $montantNetParDest,
                 'frais' => $fraisParDest,
                 'commission_appliquee' => null,
                 'date_transaction' => date('Y-m-d H:i:s'),
@@ -492,6 +510,8 @@ class TransactionsModel extends Model
             'nb_destinataires' => $nbDestinataires,
             'montant_par_dest' => $montantParDest,
             'frais_par_dest' => $fraisParDest,
+            'frais_retrait_dest' => $fraisRetraitDest,
+            'montant_net_par_dest' => $montantNetParDest,
             'total_debite' => $totalDebit,
             'transactions' => $transactionsCreees,
         ];

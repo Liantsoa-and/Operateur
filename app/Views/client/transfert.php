@@ -18,17 +18,18 @@
                                    placeholder="034 XX XXX XX" required>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Montant (Ar)</label>
-                            <input type="number" name="montant" id="montant" class="form-control form-control-lg"
-                                   min="500" step="100" placeholder="Ex: 10000" required>
-                        </div>
-
                         <div id="inclureFraisWrapper" class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="inclure_frais" id="inclure_frais" value="1">
                             <label class="form-check-label" for="inclure_frais">
-                                Inclure les frais dans le montant saisi (le destinataire reçoit moins)
+                                Inclure les frais de retrait du destinataire
                             </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" id="labelMontant">Montant à envoyer (Ar)</label>
+                            <input type="number" name="montant" id="montant" class="form-control form-control-lg"
+                                   min="500" step="100" placeholder="Ex: 10000" required>
+                            <div class="form-text" id="hintMontant">Le destinataire recevra ce montant.</div>
                         </div>
 
                         <div id="alerteCommission" class="alert alert-warning d-none">
@@ -39,7 +40,10 @@
                         </div>
 
                         <div id="recap" class="alert alert-secondary d-none">
-                            <div class="d-flex justify-content-between"><span>Frais + commission :</span><strong id="recapFrais"></strong></div>
+                            <div class="d-flex justify-content-between"><span>Frais transfert :</span><strong id="recapFrais"></strong></div>
+                            <div class="d-flex justify-content-between"><span>Frais retrait destinataire :</span><strong id="recapFraisRetrait"></strong></div>
+                            <div class="d-flex justify-content-between"><span>Commission :</span><strong id="recapCommission"></strong></div>
+                            <hr class="my-1">
                             <div class="d-flex justify-content-between"><span>Montant débité :</span><strong id="recapDebit"></strong></div>
                             <div class="d-flex justify-content-between"><span>Montant reçu par le destinataire :</span><strong id="recapNet"></strong></div>
                         </div>
@@ -54,7 +58,7 @@
     </div>
 </div>
 
-<script>
+<!-- <script>
 (function () {
     const destinataireInput = document.getElementById('destinataire');
     const montantInput      = document.getElementById('montant');
@@ -64,7 +68,11 @@
     const tauxTexte          = document.getElementById('tauxCommissionTexte');
     const montantTexte       = document.getElementById('montantCommissionTexte');
     const recapDiv           = document.getElementById('recap');
+    const labelMontant       = document.getElementById('labelMontant');
+    const hintMontant        = document.getElementById('hintMontant');
     const recapFrais         = document.getElementById('recapFrais');
+    const recapFraisRetrait  = document.getElementById('recapFraisRetrait');
+    const recapCommission    = document.getElementById('recapCommission');
     const recapDebit         = document.getElementById('recapDebit');
     const recapNet           = document.getElementById('recapNet');
 
@@ -106,7 +114,7 @@
                     montantTexte.textContent = fmt(data.commission);
                     alerteDiv.classList.remove('d-none');
                     inclureFraisWrap.classList.add('d-none');
-                    inclureFraisInput.checked = false;
+                    inclureFraisInput.checked  = false;
                     inclureFraisInput.disabled = true;
                 } else {
                     alerteDiv.classList.add('d-none');
@@ -114,12 +122,27 @@
                     inclureFraisInput.disabled = false;
                 }
 
-                recapFrais.textContent = fmt(data.frais + data.commission) + ' Ar';
-                recapDebit.textContent = fmt(data.total_debit) + ' Ar';
-                recapNet.textContent   = fmt(data.montant_net) + ' Ar';
+                const fraisRetrait = data.frais_retrait_dest ?? 0;
+                const commission   = data.commission ?? 0;
+
+                recapFrais.textContent        = fmt(data.frais) + ' Ar';
+                recapFraisRetrait.textContent  = inclureFraisInput.checked ? fmt(fraisRetrait) + ' Ar' : '—';
+                recapCommission.textContent    = commission > 0 ? fmt(commission) + ' Ar' : '—';
+                recapDebit.textContent         = fmt(data.total_debit) + ' Ar';
+                recapNet.textContent           = fmt(data.montant_net) + ' Ar';
                 recapDiv.classList.remove('d-none');
             })
             .catch(() => { alerteDiv.classList.add('d-none'); recapDiv.classList.add('d-none'); });
+    }
+
+    function majLabelMontant() {
+        if (inclureFraisInput.checked) {
+            labelMontant.textContent = 'Montant à envoyer (Ar) — frais de retrait inclus';
+            hintMontant.textContent  = 'Le destinataire recevra ce montant + ses frais de retrait.';
+        } else {
+            labelMontant.textContent = 'Montant à envoyer (Ar)';
+            hintMontant.textContent  = 'Le destinataire recevra ce montant.';
+        }
     }
 
     function debounce() {
@@ -129,7 +152,7 @@
 
     destinataireInput.addEventListener('input', debounce);
     montantInput.addEventListener('input', debounce);
-    inclureFraisInput.addEventListener('change', debounce);
+    inclureFraisInput.addEventListener('change', () => { majLabelMontant(); debounce(); });
 })();
-</script>
+</script> -->
 <?= $this->endSection() ?>
