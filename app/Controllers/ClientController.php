@@ -7,15 +7,19 @@ use App\Models\ClientModel;
 use App\Models\TransactionsModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\HTTP\RedirectResponse;
+use App\Models\ConfigEpargneModel;
 
 class ClientController extends BaseController
 {
     protected ClientModel      $clientModel;
     protected TransactionsModel $transactionsModel;
 
+    protected ConfigEpargneModel $configEpargneModel;
+
     public function __construct(){
         $this->clientModel       = new ClientModel();
         $this->transactionsModel = new TransactionsModel();
+        $this->configEpargneModel = new ConfigEpargneModel();
     }
 
     // Garde de session 
@@ -277,4 +281,25 @@ public function transfertMultiple(): string|\CodeIgniter\HTTP\RedirectResponse
         'solde'  => $this->clientModel->getSolde($this->getClientId()),
     ]);
 }
+    public function epargne(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if ($redir = $this->requireAuth()) return $redir;
+
+        if ($this->request->getMethod() === 'POST') {
+           $taux = (float) $this->request->getPost('commission_inter');
+
+        if ($taux < 0 || $taux > 100) {
+            return redirect()->back()->with('error', 'Le taux de commission doit être compris entre 0 et 100.');
+        }
+
+        $this->configEpargneModel->setPourcentage($taux,$this->getClientId());
+
+        return redirect()->to('/client/epargne')->with('success', "Commission inter-opérateur mise à jour à {$taux} %.");
+        }
+
+        return view('client/epargne', [
+            'numero' => session()->get('client_numero'),
+            'taux_epargne'  => $this->configEpargneModel->getPourcentageActuelle($this->getClientId()),
+        ]);
+    }
 }
